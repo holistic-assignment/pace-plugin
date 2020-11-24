@@ -53,9 +53,9 @@ class WC_Pace_Request_Payment {
 	public function woocommerce_pace_cancelled_order() {
 		try {
 			$order_id = WC()->session->get( 'order_awaiting_payment' );
-			
-			if ( ! $order_id ) {
-				throw new Exception( __( 'Cannot find order Id.', 'woocommerce-pace-gateway' ) );
+			$transaction_id = $_POST['data']['transactionID'];
+			if ( ! $order_id && ! $transaction_id ) {
+				throw new Exception( __( 'Cannot find order Id or transaction Id.', 'woocommerce-pace-gateway' ) );
 			}
 
 			$order = wc_get_order( $order_id );
@@ -67,6 +67,13 @@ class WC_Pace_Request_Payment {
 			// Only version 3.0.0
 			if ( is_callable( array( $order, 'save' ) ) ) {
 				$order->save();
+			}
+
+			$api = sprintf( 'checkouts/%s/cancel', esc_attr( $transaction_id ) );
+			$response = WC_Pace_API::request([], $api );
+
+			if($response->error){
+				throw new Exception( __( 'Cancel error', 'woocommerce-pace-gateway' ) );
 			}
 
 			do_action( 'woocommerce_cancelled_order', $order->get_id() );
