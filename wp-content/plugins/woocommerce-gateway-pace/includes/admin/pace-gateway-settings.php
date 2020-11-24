@@ -182,7 +182,7 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 
 	),
 	'checkout_text_second_color' => array(
-		'title' => __( 'Second text color', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Text secondary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 
 	),
