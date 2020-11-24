@@ -12,7 +12,7 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default' => 'no'
 	),
 	'sandBox' => array(
-		'title' => __( 'Enable Sandbox', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Enable Playground', 'woocommerce-pace-gateway' ),
 		'label' => ' ',
 		'type'  => 'checkbox',
 		'description' => '',
@@ -52,16 +52,16 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'desc_tip'	  => true
 	),
 	'sandbox_client_id' => array(
-		'title'		  => __( 'Sandbox Client ID', 'woocommerce-pace-gateway' ),
+		'title'		  => __( 'Playground Client ID', 'woocommerce-pace-gateway' ),
 		'type'		  => 'text',
-		'description' => 'The Sandbox Client ID. This use for testmode payment.',
+		'description' => 'The Playground Client ID. This use for testmode payment.',
 		'default'	  => '',
 		'desc_tip'	  => true
 	),
 	'sandbox_client_secret' => array(
-		'title'		  => __( 'Sandbox Client Secret', 'woocommerce-pace-gateway' ),
+		'title'		  => __( 'Playground Client Secret', 'woocommerce-pace-gateway' ),
 		'type'		  => 'password',
-		'description' => 'The Sandbox Client Secret. This use for testmode payment.',
+		'description' => 'The Playground Client Secret. This use for testmode payment.',
 		'default'	  => '',
 		'desc_tip'	  => true
 	),
@@ -93,13 +93,13 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		)
 	),
 	'single_text_primary_color' => array(
-		'title' => __( 'Primary text color', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 		'default' => 'black'
 
 	),
 	'single_text_second_color' => array(
-		'title' => __( 'Secondary text color', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Text secondary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 		'default' => '#74705e'
 
@@ -144,7 +144,7 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		
 	),
 	'multiple_text_color' => array(
-		'title' => __( 'Primary text color', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 		'default' => '#74705e'
 
@@ -177,7 +177,7 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default' => 'no'
 	),
 	'checkout_text_primary_color' => array(
-		'title' => __( 'Primary text color', 'woocommerce-pace-gateway' ),
+		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 
 	),
