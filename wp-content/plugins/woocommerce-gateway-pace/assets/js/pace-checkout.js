@@ -89,7 +89,7 @@
 					wc_pace_gateway.transaction_completed( data );
 				},
 				onCancel: function() {
-					wc_pace_gateway.transaction_cancelled();
+					wc_pace_gateway.transaction_cancelled( res );
 				},
 				onLoad: function() {
 					pacePay.hideProgressModal();
@@ -133,11 +133,12 @@
 		 * Handle after transaction was cancelled
 		 * @param  {res} token create transaction response
 		 */
-		transaction_cancelled: function() {
+		transaction_cancelled: function( res ) {
 			var method = 'POST';
 			$.ajax( {
 				url:  wc_pace_gateway.getAjaxURL( 'cancelled_order' ),
 				type: method,
+				data: res,
 				success: function( res ) {
 					if ( ! res.success ) {
 						$( document.body ).trigger( 'pace_transaction_error', [ res ] );
