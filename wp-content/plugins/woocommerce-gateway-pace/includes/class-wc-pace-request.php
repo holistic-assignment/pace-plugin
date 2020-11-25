@@ -61,7 +61,7 @@ class WC_Pace_Request_Payment {
 			$order = wc_get_order( $order_id );
 
 			$cancelled_url = apply_filters( 'woocommerce_pace_cancelled_order_redirect', $order->get_cancel_order_url_raw(), $order );
-
+			
 			WC()->session->set( 'order_awaiting_payment', false );
 
 			// Only version 3.0.0
