@@ -150,7 +150,8 @@ class WC_Pace_API {
 		    	'authorization: Basic ' . base64_encode( self::get_client_id() . ':' . self::get_client_secret() ),
 		    	'cache-control: no-cache',
 		    	'pace-version: ' . self::VERSION,
-		    	'x-pace-client-user-agent: ' . json_encode( $user_agent )
+		    	'x-pace-client-user-agent: ' . json_encode( $user_agent ),
+		    	'x-pace-platformVersion: ' . sprintf( '%s-%s, %s, %s', WC_PACE_GATEWAY_NAME, 'WooCommerce', WC_PACE_GATEWAY_VERSION, WC_VERSION )
 		  	),
 		));
 
