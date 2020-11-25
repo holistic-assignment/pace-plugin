@@ -77,6 +77,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$this->description   = apply_filters( 'the_content', __( $this->get_option('description'), 'woocommerce-pace-gateway' ) );
 		$this->enabled       = $this->get_option('enabled');
 		$this->testmode	     = 'yes' === $this->get_option('sandBox');
+		$this->checkout_mode = $this->get_option( 'checkout_mode' );
 		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
 		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
 
@@ -94,10 +95,11 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		global $pagenow;
 		/* translators: 1) webhook url */
 		$localized_message = wp_kses_post( $this->title );
-
+		
 		if ( 
 			( is_admin() and in_array( $pagenow, array( 'post.php' ) ) )
 			or ( isset( $_REQUEST['wc-ajax'] ) and 'checkout' === $_REQUEST['wc-ajax'] )
+			or ( isset( $_REQUEST['wc-ajax'] ) and 'wc_pace_create_transaction' === $_REQUEST['wc-ajax'] )
 		) {
 			$localized_message = 'Pace';
 		} elseif ( 
@@ -174,18 +176,13 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		// actions
 		add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options')); /* customizer gateway payment save change */
 		add_action('woocommerce_order_status_cancelled', array($this, 'cancel_payment'), 10, 2);
+		add_action('woocommerce_thankyou_' . $this->id, array( $this, 'pace_redirect_payment_update_order_status' )); /* update order status when redirect checkout */
 
 		/** 
 		 * Checkout process with validation posted data
 		 * @since 1.1.0
 		 */ 
 		add_filter( 'woocommerce_after_checkout_validation', array( $this, 'pace_payment_before_checkout_process' ), 10, 2 );
-
-		/**
-		 * Replace title by image
-		 * @since 1.1.1
-		 */
-		// add_filter( 'esc_html', array( $this, 'do_not_clean_html_tags' ), 10, 2 );
 	}
 
 	/**
@@ -487,7 +484,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		}
 	}
 
-		/**
+	/**
 	 * Pacenow create the transaction by checkout Order
 	 * 
 	 * @param  WC_Order $order Woocommerce order
@@ -499,5 +496,29 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$api = sprintf( 'checkouts/%s/cancel', esc_attr($order->get_transaction_id() ) );
 		$response = WC_Pace_API::request([], $api );
 		return $response;
+	}
+
+	/**
+	 * Pace update order status when redirect payment
+	 * 		
+	 * @param  WC_Order $order_id
+	 * @since 1.0.0
+	 */
+	public function pace_redirect_payment_update_order_status( $order_id ) {
+		$order = wc_get_order( $order_id );
+
+		if ( is_wp_error( $order ) ) {
+			return;
+		}
+
+		if ( 'redirect' === $this->checkout_mode and 'pending' === $order->get_status() ) {
+			// process order after rediect payment
+			$transaction = array(
+				'status' => 'success',
+				'transactionId' => '' /* already set transaction ID */
+			);
+
+			$this->process_response( $transaction, $order );
+		}
 	}
 }

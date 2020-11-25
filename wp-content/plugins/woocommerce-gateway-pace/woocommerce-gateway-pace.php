@@ -213,6 +213,7 @@ function woocommerce_gateway_pace_init()
 					$pace_params = array();
 					$pace_params['ajaxurl'] = WC_AJAX::get_endpoint('%%endpoint%%');
 					$pace_params['pace_nonce'] = wp_create_nonce('_wc_pace_nonce');
+					$pace_params['checkout_mode'] = $pace_settings['checkout_mode'];
 
 					wp_register_script('woocommerce_pace_checkout', plugins_url('assets/js/pace-checkout' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
 					wp_localize_script('woocommerce_pace_checkout', 'wc_pace_params', $pace_params);

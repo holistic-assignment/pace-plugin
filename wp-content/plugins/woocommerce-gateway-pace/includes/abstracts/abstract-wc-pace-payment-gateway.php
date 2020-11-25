@@ -96,7 +96,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 			'referenceID'  => wp_kses_post( $order->get_id() ),
 			'redirectUrls' => array(
 				'success' => apply_filters( 'woocommerce_get_checkout_order_received_url', $success_url ),
-				'failed'  => home_url()
+				'failed'  => esc_url_raw( $order->get_cancel_order_url_raw() )
 			)
 		);
 	}
@@ -114,6 +114,8 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 			throw new Exception( __( 'Unknow transaction source status.', 'woocommerce-pace-gateway' ) );
 		}
 
+		$transaction_id = empty( $transaction['transactionId'] ) ? $order->get_transaction_id() : $transaction['transactionId'];
+
 		switch ( $transaction['status'] ) {
 
 			case 'pending':
@@ -123,13 +125,12 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 					wc_reduce_stock_levels( $order_id );
 				}
 
-				$order->set_transaction_id( $transaction['transactionId'] );
-				$order->update_status( 'on-hold', sprintf( __( 'Pace\'s transaction awaiting payment: %s.', 'woocommerce-pace-gateway' ), $transaction['transactionId'] ) );
+				$order->update_status( 'on-hold', sprintf( __( 'Pace\'s transaction awaiting payment: %s.', 'woocommerce-pace-gateway' ), $transaction_id ) );
 				break;
 
 			case 'success':
-				$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction['transactionId'] );
-				$order->payment_complete( $transaction['transactionId'] );
+				$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction_id );
+				$order->payment_complete();
 				$order->add_order_note( $message );
 				break;
 

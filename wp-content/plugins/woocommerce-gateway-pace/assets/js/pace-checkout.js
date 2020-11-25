@@ -50,8 +50,16 @@
 					if ( ! res.success ) {
 						$( document.body ).trigger( 'pace_transaction_error', res );
 					} else {
-						// show confirm transaction popup
-						wc_pace_gateway.showPopup( res );
+						switch ( wc_pace_params['checkout_mode'] ) {
+							case 'popup':
+								wc_pace_gateway.showPopup( res );
+								break;
+							case 'redirect':
+								window.location.href = res.data.paymentLink;
+								break;
+							default:
+								console.log( 'Awaiting for Pace transaction' );
+						}
 					}
 				}
 			} );

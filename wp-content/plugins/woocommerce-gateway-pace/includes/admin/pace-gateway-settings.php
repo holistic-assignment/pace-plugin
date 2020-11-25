@@ -5,18 +5,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 return apply_filters( 'customizer-gateway-setting-fields', array(
 	'enabled' => array(
-		'title' => __( 'Enable', 'woocommerce-pace-gateway' ),
-		'label' => ' ',
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable', 'woocommerce-pace-gateway' ),
+		'label'       => ' ',
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
 	),
 	'sandBox' => array(
-		'title' => __( 'Enable Playground', 'woocommerce-pace-gateway' ),
-		'label' => ' ',
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable Playground', 'woocommerce-pace-gateway' ),
+		'label'       => ' ',
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
+	),
+	'checkout_mode' => array(
+		'title'       => __( 'Pay With Pace Mode', 'woocommerce-pace-gateway' ),
+		'type'        => 'select',
+		'options'	  => array(
+			'popup' => __( 'Popup', 'woocommerce-pace-gateway' ),
+			'redirect' => __( 'Redirect', 'woocommerce-pace-gateway' )
+		),
+		'description' => 'Select the checkout mode.',
+		'desc_tip'    => true,
+		'default'     => 'popup'
 	),
 	'title' => array(
 		'title'       => __( 'Title', 'woocommerce-pace-gateway' ),
@@ -71,53 +82,53 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	),
 
 	'single_widget_section' => array(
-		'title' => __( 'Product Widget', 'woocommerce-pace-gateway' ),
-		'type'  => 'title'
+		'title'       => __( 'Product Widget', 'woocommerce-pace-gateway' ),
+		'type'        => 'title',
+		'description' => ''
 	),
 	//single
 	'enable_single_widget' => array(
-		'title' => __( 'Enable', 'woocommerce-pace-gateway' ),
-		'label' => ' ',
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable', 'woocommerce-pace-gateway' ),
+		'label'       => ' ',
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
 	),
 	'single_theme_config_color' => array(
-		'title' => __( 'Theme color', 'woocommerce-pace-gateway' ),
-		'label' => __( ' ', 'woocommerce-pace-gateway' ),
-		'type'  => 'select',
-		'default' => 'light',
-		'options' => array(
-			'dark'     => __( 'Dark', 'woocommerce' ),
+		'title'       => __( 'Theme color', 'woocommerce-pace-gateway' ),
+		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
+		'description' => '',
+		'type'        => 'select',
+		'default'     => 'light',
+		'options'     => array(
+			'dark'  => __( 'Dark', 'woocommerce' ),
 			'light' => __( 'Light', 'woocommerce' ),
 		)
 	),
 	'single_text_primary_color' => array(
-		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
-		'default' => 'black'
-
+		'title'       => __( 'Text primary color', 'woocommerce-pace-gateway' ),
+		'type'        => 'text',
+		'default'     => 'black',
+		'description' => ''
 	),
 	'single_text_second_color' => array(
-		'title' => __( 'Text secondary color', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
+		'title'   => __( 'Text secondary color', 'woocommerce-pace-gateway' ),
+		'type'    => 'text',
 		'default' => '#74705e'
-
 	),
 	'single_fontsize' => array(
-		'title' => __( 'Font Size', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
+		'title'   => __( 'Font Size', 'woocommerce-pace-gateway' ),
+		'type'    => 'text',
 		'default' => '13'
-
 	),
 	'single_widget_style' => array(
-		'title' => __( 'Widget style', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
-		'desc_tip' => true,
+		'title'       => __( 'Widget style', 'woocommerce-pace-gateway' ),
+		'type'        => 'text',
+		'desc_tip'    => true,
 		'description' => 'Singular product - Widget styles customize. Separated each prop by commas.'
 	),
 	'space_multiple' => array(
-		'type'		  => 'title',
+		'type'  => 'title',
 	),
 	'multiple_widget_section' => array(
 		'title' => __( 'Product Catalog Widget', 'woocommerce-pace-gateway' ),
@@ -125,44 +136,41 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	),
 	//multiple
 	'enable_multiple_widget' => array(
-		'title' => __( 'Enable', 'woocommerce-pace-gateway' ),
-		'label' => ' ',
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable', 'woocommerce-pace-gateway' ),
+		'label'       => ' ',
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
 	),
 	'multiple_theme_config_color' => array(
-		'title' => __( 'Theme color', 'woocommerce-pace-gateway' ),
-		'label' => __( ' ', 'woocommerce-pace-gateway' ),
-		'type'  => 'select',
+		'title'   => __( 'Theme color', 'woocommerce-pace-gateway' ),
+		'label'   => __( ' ', 'woocommerce-pace-gateway' ),
+		'type'    => 'select',
 		'default' => '',
-			'options' => array(
-				''      => __( 'Please select theme color', 'woocommerce' ),
-				'dark'  => __( 'Dark', 'woocommerce' ),
-				'light' => __( 'Light', 'woocommerce' ),
-			),
-		
+		'options' => array(
+			''      => __( 'Please select theme color', 'woocommerce' ),
+			'dark'  => __( 'Dark', 'woocommerce' ),
+			'light' => __( 'Light', 'woocommerce' ),
+		),
 	),
 	'multiple_text_color' => array(
-		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
+		'title'   => __( 'Text primary color', 'woocommerce-pace-gateway' ),
+		'type'    => 'text',
 		'default' => '#74705e'
-
 	),
 	'multiple_fontsize' => array(
-		'title' => __( 'Font Size	', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
-		'default'=> "13"
-
+		'title'   => __( 'Font Size	', 'woocommerce-pace-gateway' ),
+		'type'    => 'text',
+		'default' => "13"
 	),
 	'multiple_widget_style' => array(
-		'title' => __( 'Widget style', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
-		'desc_tip' => true,
+		'title'       => __( 'Widget style', 'woocommerce-pace-gateway' ),
+		'type'        => 'text',
+		'desc_tip'    => true,
 		'description' => 'Multiple products - Widget styles customize. Separated each prop by commas.'
 	),
 	'space_multiple' => array(
-		'type'		  => 'title',
+		'type' => 'title',
 	),
 	'checkout_widget_section' => array(
 		'title' => __( 'Checkout Widget', 'woocommerce-pace-gateway' ),
@@ -170,11 +178,11 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	),
 	//checkout
 	'enable_checkout_widget' => array(
-		'title' => __( 'Enable', 'woocommerce-pace-gateway' ),
-		'label' => ' ',
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable', 'woocommerce-pace-gateway' ),
+		'label'       => ' ',
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
 	),
 	'checkout_text_primary_color' => array(
 		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
@@ -205,10 +213,10 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'type'  => 'text',
 	),
 	'enable_fallback' => array(
-		'title' => __( 'Enable Fallback Widget', 'woocommerce-pace-gateway' ),
-		'label' => __( ' ', 'woocommerce-pace-gateway' ),
-		'type'  => 'checkbox',
+		'title'       => __( 'Enable Fallback Widget', 'woocommerce-pace-gateway' ),
+		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
+		'type'        => 'checkbox',
 		'description' => '',
-		'default' => 'no'
+		'default'     => 'no'
 	),
 ) );
