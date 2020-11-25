@@ -406,8 +406,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$transaction_id = apply_filters( 'woocommerce_pace_cancelled_payment_order_transaction', $order->get_transaction_id(), $order );
 		
 		// make a request
-		$api = sprintf( 'checkouts/%s/cancel', esc_attr( $transaction_id ) );
-		$response = WC_Pace_API::request([], $api );
+		$response = $this->cancel_transaction($order);
 
 		if ($response->error) {
 			$instance->set_status(wc_clean(wp_unslash($result->status)), '', true);
@@ -440,12 +439,22 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			// store the pre-order id to use later
 			WC()->session->set( 'order_awaiting_payment', $order_id );
 
+
 			// validate pacenow's plan
 			$available_plan = WC_Pace_Helper::validate_create_transaction( $order );
+
+			if($order->get_transaction_id()) {
+				$this->cancel_transaction( $order );
+		   	} 
 
 			// send the request to Pacenow API to create transaction
 			$transaction = $this->make_request_create_transaction( $order );
 
+			if($transaction->transactionID){
+				$order->set_transaction_id($transaction->transactionID);
+				$order->save();
+			}
+			
 			wp_send_json_success( $transaction );
 		} catch ( Exception $e ) {
 			WC_Pace_Logger::log( $e->getMessage() );
@@ -476,5 +485,19 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				$this->create_transaction( $data );
 			}
 		}
+	}
+
+		/**
+	 * Pacenow create the transaction by checkout Order
+	 * 
+	 * @param  WC_Order $order Woocommerce order
+	 * @return array           Pacenow API response
+	 */
+	public function cancel_transaction($order)
+	{
+		
+		$api = sprintf( 'checkouts/%s/cancel', esc_attr($order->get_transaction_id() ) );
+		$response = WC_Pace_API::request([], $api );
+		return $response;
 	}
 }
