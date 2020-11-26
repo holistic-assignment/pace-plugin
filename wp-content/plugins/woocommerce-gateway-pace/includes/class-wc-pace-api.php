@@ -133,7 +133,6 @@ class WC_Pace_API {
 		self::$options = get_option( 'woocommerce_pace_settings' );
 
 		$curl = curl_init();
-		$user_agent = self::get_user_agent();
 
 		curl_setopt_array( $curl, array(
 		  	CURLOPT_URL => self::$endpoint . self::API_VER . $api,
@@ -150,8 +149,7 @@ class WC_Pace_API {
 		    	'authorization: Basic ' . base64_encode( self::get_client_id() . ':' . self::get_client_secret() ),
 		    	'cache-control: no-cache',
 		    	'pace-version: ' . self::VERSION,
-		    	'x-pace-client-user-agent: ' . json_encode( $user_agent ),
-		    	'x-pace-platformVersion: ' . sprintf( '%s-%s, %s, %s', WC_PACE_GATEWAY_NAME, 'WooCommerce', WC_PACE_GATEWAY_VERSION, WC_VERSION )
+		    	'x-pace-platformversion: ' . sprintf( '%s-%s, %s, %s', WC_PACE_GATEWAY_NAME, 'WooCommerce', WC_PACE_GATEWAY_VERSION, WC_VERSION )
 		  	),
 		));
 
