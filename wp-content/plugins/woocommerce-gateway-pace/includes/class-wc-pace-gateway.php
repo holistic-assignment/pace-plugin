@@ -80,7 +80,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$this->checkout_mode = $this->get_option( 'checkout_mode' );
 		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
 		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
-
+		$this->options       = get_option('woocommerce_pace_settings');
 		// hooks
 		$this->initHooks();
 	}
@@ -106,8 +106,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			( isset( $_REQUEST['wc-ajax'] ) and 'update_order_review' === $_REQUEST['wc-ajax'] ) // shows on checkout page - wc-ajax:update_order_review
 		   	or !is_admin() 
 		) {
-			$style = apply_filters( 'woocommerce_pace_payment_methods_logo_style', 'margin: 6px 6px 0; width: auto; height: 14px' );
-			$logo = sprintf( '<img id="pace-settings-logo" src="%s" style="%s">', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/logo.svg', $style );
+			$logo = sprintf( '<img id="pace-settings-logo" src="%s" style="%s">', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/logo.svg', $this->options['logo_style'] );
 			$localized_message = "<span style='display: inline-flex; align-items: center;'>Pay with $logo in 3 instalments</span>";
 		}
 
@@ -198,7 +197,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	public function payment_fields()
 	{
 		global $wp, $woocommerce;
-		$options = get_option('woocommerce_pace_settings');
+		$options = $this->options;
 
 		do_action('woocommerce_checkout_before_order_review');
 

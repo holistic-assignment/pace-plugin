@@ -212,6 +212,10 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'title' => __( 'Fontsize', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
 	),
+	'plugins_options' => array(
+		'title' => __( 'Options', 'woocommerce-pace-gateway' ),
+		'type'  => 'title'
+	),
 	'enable_fallback' => array(
 		'title'       => __( 'Enable Fallback Widget', 'woocommerce-pace-gateway' ),
 		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
@@ -219,4 +223,8 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'description' => '',
 		'default'     => 'no'
 	),
+	'logo_style' => array(
+		'title' => __( 'Logo style', 'woocommerce-pace-gateway' ),
+		'type'  => 'text',
+	)
 ) );
