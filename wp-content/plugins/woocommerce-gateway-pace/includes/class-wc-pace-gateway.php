@@ -74,7 +74,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 		// Get setting values.
 		$this->title         = $this->get_option('title');
-		$this->description   = apply_filters( 'the_content', __( $this->get_option('description'), 'woocommerce-pace-gateway' ) );
+		$this->description   = $this->get_option('description');
 		$this->enabled       = $this->get_option('enabled');
 		$this->testmode	     = 'yes' === $this->get_option('sandBox');
 		$this->checkout_mode = $this->get_option( 'checkout_mode' );
@@ -158,9 +158,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		 * since 1.1.0
 		 */ 
 		$country = isset( WC()->customer ) ? WC()->customer->get_billing_country() : '';
-		$country = !empty( $country ) ? $country : '';
 		$currency = WC_Pace_Helper::get_currency_by_country( $country );
-
+		
 		if ( 'yes' == $this->enabled and 
 		   ( !empty( $this->client_id ) and !empty( $this->client_secret ) ) and
 		   WC_Pace_Helper::is_block( $currency )
@@ -233,8 +232,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			id="pace-payment-data"
 			data-email="%s"
 			data-full-name="%s"
-			data-currency="%s"
-		>',
+			data-currency="%s">',
 			esc_attr($user_email),
 			esc_attr($firstname . ' ' . $lastname),
 			esc_attr(strtolower(get_woocommerce_currency()))
@@ -246,7 +244,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				data-price=$total
 				data-enabled='$options[enable_checkout_widget]'
 				data-checkout-primary-color='$options[checkout_text_primary_color]'
-				data-timeline-color = '$options[checkout_text_timeline_color]
+				data-timeline-color='$options[checkout_text_timeline_color]
 				data-checkout-second-color='$options[checkout_text_second_color]'
 				data-fontsize='$options[checkout_fontsize]'
 				data-checkout-background-color='$options[checkout_background_color]'
