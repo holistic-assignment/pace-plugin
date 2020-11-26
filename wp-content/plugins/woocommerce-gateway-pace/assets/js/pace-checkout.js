@@ -66,6 +66,8 @@
 		},
 
 		transaction: function() {
+
+			$('#place_order').prop('disabled', true);
 			if ( ! wc_pace_gateway.isChosen() ) {
 				return true;
 			}
