@@ -154,6 +154,7 @@ function woocommerce_gateway_pace_init()
 				}
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
+				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 			}
@@ -222,6 +223,37 @@ function woocommerce_gateway_pace_init()
 				}
 				
 				wp_enqueue_script('pace', $pace_sdk, null, null, true);
+			}
+
+			/**
+			 * handle cancel pacenow's transaction in admin pannel.
+			 * 
+			 * @param int $order_id  WC_Order::id
+			 * @param string $from old order status
+			 * @param string $to new order status
+			 * @param WC_Order $instance WC_Order:instance
+			 * @version 1.0.0
+			 * @since 1.0.1
+			 */
+			public function cancel_payment($order_id, $from, $to, $instance)
+			{
+				$order = wc_get_order( $order_id );
+				
+				if ( 'cancelled' === $to ) {
+					// Cancelled Pace transaction
+					$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
+					
+					if ($response->error) {
+						$localized_message = __( 'Cancel order failed because Pace\'s transaction cannot be canceled.', 'woocommerce-pace-gateway' );
+						add_filter( 'woocommerce_order_cancelled_notice', function() use ( $localized_message ) {
+							return $localized_message;
+						} );
+						$order->add_order_note( $localized_message );
+						// retreive order's old status
+						$order->set_status(wc_clean($from), '', true);
+						$order->save();
+					}
+				}
 			}
 
 			/**

@@ -60,19 +60,12 @@ class WC_Pace_Request_Payment {
 			$order = wc_get_order( $order_id );
 
 			if ( is_wp_error( $order ) ) {
-				throw new Exception( __( 'Can\'t retrieve Order.', 'woocommerce-pace-gateway' ) );
+				throw new Exception( 'woocommerce_api_cannot_create_order', sprintf( __( 'Cannot create order: %s', 'woocommerce-pace-gateway' ), implode( ', ', $order->get_error_messages() ) ), 400 );
 			}
 
 			$cancelled_url = apply_filters( 'woocommerce_pace_cancelled_order_redirect', $order->get_cancel_order_url_raw(), $order );
 			
-			WC()->session->set( 'order_awaiting_payment', false );
-
-			$order->set_status( 'wc-cancelled', '', true );
-
-			// Only version 3.0.0
-			if ( is_callable( array( $order, 'save' ) ) ) {
-				$order->save();
-			}
+			// WC()->session->set( 'order_awaiting_payment', false );
 
 			do_action( 'woocommerce_cancelled_order', $order->get_id() );
 

@@ -173,7 +173,6 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	{	
 		// actions
 		add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options')); /* customizer gateway payment save change */
-		add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 		add_action('woocommerce_thankyou_' . $this->id, array( $this, 'pace_redirect_payment_update_order_status' )); /* update order status when redirect checkout */
 
 		/** 
@@ -386,32 +385,6 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	}
 
 	/**
-	 * handle cancel pacenow's transaction in admin pannel.
-	 * 
-	 * @param int $order_id  WC_Order::id
-	 * @param string $from old order status
-	 * @param string $to new order status
-	 * @param WC_Order $instance WC_Order:instance
-	 * @version 1.0.0
-	 * @since 1.0.1
-	 */
-	public function cancel_payment($order_id, $from, $to, $instance)
-	{
-		$order = wc_get_order( $order_id );
-
-		if ( $order->get_status() === 'cancelled' ) {
-			// Cancelled Pace transaction
-			$response = $this->cancel_transaction($order);
-			$response->error = true;
-			if ($response->error) {
-				// retreive order's old status
-				$instance->set_status(wc_clean($from), '', true);
-				$instance->save();
-			}
-		}
-	}
-
-	/**
 	 * Pacenow Gateway - create transaction
 	 * 
 	 * @param  array $posted_data  checkout's validated post data
@@ -441,7 +414,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$available_plan = WC_Pace_Helper::validate_create_transaction( $order );
 
 			if($order->get_transaction_id()) {
-				$this->cancel_transaction( $order );
+				self::cancel_transaction( $order );
 		   	} 
 
 			// send the request to Pacenow API to create transaction
@@ -490,7 +463,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * @param  WC_Order $order Woocommerce order
 	 * @return array           Pacenow API response
 	 */
-	public function cancel_transaction($order)
+	public static function cancel_transaction($order)
 	{
 		$transaction_id = apply_filters( 'woocommerce_pace_cancelled_payment_order_transaction', $order->get_transaction_id(), $order );
 		$api = sprintf( 'checkouts/%s/cancel', $transaction_id );
