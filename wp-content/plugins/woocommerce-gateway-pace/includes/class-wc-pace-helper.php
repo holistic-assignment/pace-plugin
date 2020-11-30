@@ -94,19 +94,24 @@ class WC_Pace_Helper
 	 * @return boolean
 	 */
 	public static function is_block( $currency = '' ) {
-		if ( is_admin() ) {
-			return true; /* only pages on front */
-		}
+		try {
+			if ( is_admin() ) {
+				return true; /* only pages on front */
+			}
 
-		if ( !$currency ) {
-			$plugin_allows_currency = self::get_merchant_plan();
-			$currency = isset( $plugin_allows_currency ) ? $plugin_allows_currency->currencyCode : null;
-		}
-		
-		if ( is_null( $currency ) ) {
+			if ( !$currency ) {
+				$plugin_allows_currency = self::get_merchant_plan();
+				$currency = isset( $plugin_allows_currency ) ? $plugin_allows_currency->currencyCode : null;
+			}
+
+			if ( is_null( $currency ) ) {
+				throw new Exception( __( 'The client\'s currency does not available.', 'woocommerce-pace-gateway' ) );
+			}
+
+			return strtoupper( get_option('woocommerce_currency') ) === $currency;
+		} catch (Exception $e) {
+			WC_Pace_Logger::log('Error: ' . $e->getMessage());
 			return;
 		}
-
-		return strtoupper( get_option('woocommerce_currency') ) === $currency;
 	}
 }

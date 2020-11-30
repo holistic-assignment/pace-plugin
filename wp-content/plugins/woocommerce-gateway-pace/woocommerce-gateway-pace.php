@@ -238,8 +238,8 @@ function woocommerce_gateway_pace_init()
 			public function cancel_payment($order_id, $from, $to, $instance)
 			{
 				$order = wc_get_order( $order_id );
-				
-				if ( 'cancelled' === $to ) {
+
+				if ( 'cancelled' === $to and 'pace' === strtolower( $order->get_payment_method_title() ) ) {
 					// Cancelled Pace transaction
 					$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
 					
