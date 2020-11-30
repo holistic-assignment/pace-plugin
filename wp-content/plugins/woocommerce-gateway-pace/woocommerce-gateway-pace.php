@@ -157,6 +157,25 @@ function woocommerce_gateway_pace_init()
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
+				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
+			}
+
+			/**
+			 * Add plugin action links
+			 * 	
+			 * @param  array $links  WP default plugin action links
+			 * @return array 	     Plugin action link after filter
+			 */
+			public function plugin_action_links($links) {
+				$setting_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=pace' );
+				$customize_links = apply_filters( 'pace_customizer_action_links', 
+					array(
+						sprintf( '<a href="%s">%s</a>', $setting_url, __( 'Settings', 'woocommerce-pace-gateway' ) ),
+					), 
+					$links 
+				);
+				
+				return array_merge( $customize_links, $links );
 			}
 
 			/**
