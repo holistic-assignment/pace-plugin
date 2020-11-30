@@ -131,11 +131,9 @@ class WC_Pace_API {
 	public static function request( $request, $api, $method = 'POST' ) {
 		// set options to config api
 		self::$options = get_option( 'woocommerce_pace_settings' );
-
 		$curl = curl_init();
-
 		curl_setopt_array( $curl, array(
-		  	CURLOPT_URL => self::$endpoint . self::API_VER . $api,
+		  	CURLOPT_URL => self::get_api_request() . self::API_VER . $api,
 		  	CURLOPT_RETURNTRANSFER => true,
 		  	CURLOPT_ENCODING => '',
 		  	CURLOPT_MAXREDIRS => 10,
