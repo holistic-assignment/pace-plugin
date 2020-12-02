@@ -74,10 +74,11 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 		// Get setting values.
 		$this->title         = $this->get_option('title');
-		$this->description   = $this->get_option('description');
 		$this->enabled       = $this->get_option('enabled');
 		$this->testmode	     = 'yes' === $this->get_option('sandBox');
+		$this->description   = $this->get_description();
 		$this->checkout_mode = $this->get_option( 'checkout_mode' );
+
 		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
 		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
 		$this->options       = get_option('woocommerce_pace_settings');
@@ -111,6 +112,15 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		}
 
 		return __( $localized_message, 'woocommerce-pace-gateway' );
+	}
+
+	/**
+	 * Displays the plugin description
+	 * 
+	 * @return string default description
+	 */
+	public function get_description() {
+		return __( "Spread your purchases into 3 interest-free instalments.<br/><br/>Reminders and notifications will be sent to you each time a payment is due or has been charged.", 'woocommerce-pace-gateway' );
 	}
 
 	/**
@@ -236,7 +246,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			esc_attr(strtolower(get_woocommerce_currency()))
 		);
 
-		echo apply_filters( 'woocommerce_pace_payment_methods_description', nl2br( $this->description ), $this->description ); /* adding break line when press 'enter' in textarea */
+		echo '<div class="pace-pay-description" style="margin-bottom: 20px;">'. $this->description .'</div>';
 
 		echo "<div id='pace-pay-widget-container' 
 				data-price=$total

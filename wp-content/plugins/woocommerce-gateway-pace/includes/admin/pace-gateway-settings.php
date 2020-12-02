@@ -36,13 +36,6 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default'     => __( 'Pay with Pace', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true,
 	),
-	'description' => array(
-		'title'       => __( 'Description', 'woocommerce-pace-gateway' ),
-		'type'        => 'textarea',
-		'description' => __( 'This controls the description which the user sees during checkout.', 'woocommerce-pace-gateway' ),
-		'default'     => __( 'Pay with your order via Pace Gateway.', 'woocommerce-pace-gateway' ),
-		'desc_tip'    => true,
-	),
 	'note' => array(
 		'title'		  => __( 'API Credentials', 'woocommerce-pace-gateway' ),
 		'type'		  => 'title',
