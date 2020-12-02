@@ -90,28 +90,33 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * Displays the admin settings payment sub-title
 	 * 
 	 * @return mixed
-	 * @since 1.1.1
+	 * @since 1.0.0
 	 */
 	public function get_title() {
 		global $pagenow;
 		/* translators: 1) webhook url */
-		$localized_message = wp_kses_post( $this->title );
+		$pace_title = wp_kses_post( $this->title );
 		
 		if ( 
 			( is_admin() and in_array( $pagenow, array( 'post.php' ) ) )
 			or ( isset( $_REQUEST['wc-ajax'] ) and 'checkout' === $_REQUEST['wc-ajax'] )
 			or ( isset( $_REQUEST['wc-ajax'] ) and 'wc_pace_create_transaction' === $_REQUEST['wc-ajax'] )
 		) {
-			$localized_message = 'Pace';
+			$pace_title = 'Pace';
 		} elseif ( 
 			( isset( $_REQUEST['wc-ajax'] ) and 'update_order_review' === $_REQUEST['wc-ajax'] ) // shows on checkout page - wc-ajax:update_order_review
 		   	or !is_admin() 
 		) {
-			$logo = sprintf( '<img id="pace-settings-logo" src="%s" style="%s">', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/logo.svg', $this->options['logo_style'] );
-			$localized_message = "<span style='display: inline-flex; align-items: center;'>Pay with $logo in 3 instalments</span>";
+			/**
+			 * Update checkout payment logo
+			 *
+			 * @since 1.0.2
+			 */
+			$logo = file_get_contents( wc_clean( WC_PACE_GATEWAY_PLUGIN_PATH . '/assets/image/logo.svg' ) );
+			$pace_title = "<span style='display: inline-flex; align-items: center;'>Pay with $logo in 3 instalments</span>";
 		}
 
-		return __( $localized_message, 'woocommerce-pace-gateway' );
+		return __( $pace_title, 'woocommerce-pace-gateway' );
 	}
 
 	/**
@@ -126,7 +131,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	/**
 	 * Overried the description for admin screens.
 	 *
-	 * @since 1.1.1
+	 * @since 1.0.0
 	 * @return string
 	 */
 	public function get_method_description() {
@@ -137,10 +142,10 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	/**
 	 * Override output the gateway settings screen.
 	 * 
-	 * @since 1.1.1
+	 * @since 1.0.0
 	 */
 	public function admin_options() {
-		printf( '<img id="%s" src="%s">', 'pace-settings-logo', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/logo.svg' );
+		printf( '<img id="%s" src="%s">', 'pace-settings-logo', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/pace_logo.png' );
 		parent::admin_options();
 	}
 

@@ -215,9 +215,5 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'type'        => 'checkbox',
 		'description' => '',
 		'default'     => 'no'
-	),
-	'logo_style' => array(
-		'title' => __( 'Logo style', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
 	)
 ) );
