@@ -53,9 +53,9 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 * @param  WC_Order::get_items $items list item assign by order
 	 * @return array 		   			  list source items
 	 */
-	public function get_source_order_items( $items ) {
+	public function get_source_order_items( $items , $order ) {
 		$source = array();
-		array_walk( $items , function( $item, $id ) use ( &$source ) {
+		array_walk( $items , function( $item, $id ) use ( &$source, $order ) {
 			// get WC_Product item by ID
 			$product = $item->get_product();
 			$source_item = array(
@@ -63,7 +63,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 				'itemType'		 => wp_kses_post( wp_strip_all_tags( $product->get_categories(), true ) ), /* remove html tags, just only get categories name */
 				'reference' 	 => wp_kses_post( absint( $id ) ),
 				'name' 			 => wp_kses_post( apply_filters( 'woocommerce_order_item_name', $item->get_name(), $item, false ) ),
-				'productUrl' 	 => wp_kses_post( apply_filters( 'woocommerce_order_item_permalink', $product->get_permalink(), $item ) ),
+				'productUrl' 	 => wp_kses_post( apply_filters( 'woocommerce_order_item_permalink', $product->get_permalink(), $item, $order ) ),
 				'imageUrl' 		 => wp_kses_post( apply_filters( 'woocommerce_order_item_thumbnail', get_the_post_thumbnail_url( $product->get_id(), 'large' ) ) ),
 				'quantity' 		 => apply_filters( 'woocommerce_order_item_quantity', $item->get_quantity(), $item ),
 				'tags'			 => apply_filters( 'woocommerce_pace_transaction_items_tag', explode( ', ' , wp_strip_all_tags( $product->get_tags() ) ) ), /* remove html tags, get only tags and explode to array */
@@ -90,7 +90,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 		$success_url = add_query_arg( 'key', $order->get_order_key(), $success_url );
 
 		return array(
-			'items'		   => $this->get_source_order_items( $order->get_items() ),
+			'items'		   => $this->get_source_order_items( $order->get_items(), $order ),
 			'amount'	   => self::unit_cents( $order->get_total() ),
 			'currency'     => $order->get_currency(),
 			'referenceID'  => wp_kses_post( $order->get_id() ),

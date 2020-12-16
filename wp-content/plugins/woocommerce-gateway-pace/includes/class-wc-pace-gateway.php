@@ -110,7 +110,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			/**
 			 * Update checkout payment logo
 			 *
-			 * @since 1.0.2
+			 * @since 1.0.3
 			 */
 			$logo = file_get_contents( wc_clean( WC_PACE_GATEWAY_PLUGIN_PATH . '/assets/image/logo.svg' ) );
 			$pace_title = "<span style='display: inline-flex; align-items: center;'>Pay with $logo in 3 instalments</span>";

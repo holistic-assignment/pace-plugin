@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://pace.co/
- * Version: 1.0.2
+ * Version: 1.0.3
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -216,8 +216,8 @@ function woocommerce_gateway_pace_init()
 			 */
 			public function loaded_pace_script() {
 				$pace_settings = get_option( 'woocommerce_pace_settings' );
-				$is_testmode = isset( $pace_settings['sandBox'] ) and 'yes' === $pace_settings['sandBox'];
-				$is_enabled  = isset( $pace_settings['enabled'] ) and 'yes' === $pace_settings['enabled'];
+				$is_testmode = isset( $pace_settings['sandBox'] ) && 'yes' === $pace_settings['sandBox'];
+				$is_enabled  = isset( $pace_settings['enabled'] ) && 'yes' === $pace_settings['enabled'];
 				$pace_sdk = $is_testmode ? 'https://pay-playground.pacenow.co/pace-pay.js' : 'https://pay.pacenow.co/pace-pay.js';
 				$suffix = $is_testmode ? '' : '.min';
 
