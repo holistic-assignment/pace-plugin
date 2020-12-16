@@ -42,7 +42,6 @@
 			// convert to object
 			ajax_data = Object.assign( {}, ajax_data );
 			ajax_data['payment_method'] = 'pace'
-			console.log("ajax_data", ajax_data)
 			$.ajax( {
 				url:  wc_pace_gateway.getAjaxURL( 'create_transaction' ),
 				type: method,
