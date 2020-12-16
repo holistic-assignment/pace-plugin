@@ -149,9 +149,9 @@ function woocommerce_gateway_pace_init()
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-gateway.php';
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-request.php'; /* handle payment request */
 
-				if ( !$this->is_block() ) {
+				if ( !$this->is_block() )
 					return; /* block the plugin when the currency is not allows */
-				}
+
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
@@ -262,7 +262,7 @@ function woocommerce_gateway_pace_init()
 					// Cancelled Pace transaction
 					$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
 					
-					if ($response->error) {
+					if (isset($response->error)) {
 						$localized_message = __( 'Cancel order failed because Pace\'s transaction cannot be canceled.', 'woocommerce-pace-gateway' );
 						add_filter( 'woocommerce_order_cancelled_notice', function() use ( $localized_message ) {
 							return $localized_message;

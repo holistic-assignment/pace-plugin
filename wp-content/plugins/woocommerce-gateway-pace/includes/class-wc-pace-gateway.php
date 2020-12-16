@@ -188,13 +188,13 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	{	
 		// actions
 		add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options')); /* customizer gateway payment save change */
-		add_action('woocommerce_thankyou_' . $this->id, array( $this, 'pace_redirect_payment_update_order_status' )); /* update order status when redirect checkout */
+		add_action('woocommerce_thankyou_' . $this->id, array($this, 'pace_redirect_payment_update_order_status' )); /* update order status when redirect checkout */
 
 		/** 
 		 * Checkout process with validation posted data
 		 * @since 1.1.0
 		 */ 
-		add_filter( 'woocommerce_after_checkout_validation', array( $this, 'pace_payment_before_checkout_process' ), 10, 2 );
+		add_action('woocommerce_create_transaction_before_checkout', array($this, 'woocommerce_create_transaction_before_checkout_hooks'), 10, 2);
 	}
 
 	/**
@@ -406,7 +406,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * @since 1.1.0
 	 * @return array|object transaction response
 	 */
-	protected function create_transaction( $posted_data ) {
+	public function woocommerce_create_transaction_before_checkout_hooks( $posted_data ) {
 		try {
 			// create an order from posted data
 			$order_id = WC()->checkout->create_order( $posted_data );
@@ -426,7 +426,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 
 			// validate pacenow's plan
-			$available_plan = WC_Pace_Helper::validate_create_transaction( $order );
+			WC_Pace_Helper::validate_create_transaction( $order );
 
 			if($order->get_transaction_id()) {
 				self::cancel_transaction( $order );
@@ -435,7 +435,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			// send the request to Pacenow API to create transaction
 			$transaction = $this->make_request_create_transaction( $order );
 
-			if($transaction->transactionID){
+			if ($transaction->transactionID) {
 				$order->set_transaction_id($transaction->transactionID);
 				$order->save();
 			}
@@ -445,30 +445,6 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			WC_Pace_Logger::log( $e->getMessage() );
 			wc_add_notice( $e->getMessage(), 'error' );
 			wp_send_json_error( array( 'message' => wc_print_notices( true ) ) );
-		}
-	}
-
-	/**
-	 * Added checkout pyament flag to posted data
-	 *
-	 * @param array $data current posted data
-	 * @return array the posted data with flag
-	 */
-	public function pace_payment_before_checkout_process( $data, $errors ) {
-		$ajax_request = wp_kses( $_REQUEST['wc-ajax'], false );
-
-		if ( 'wc_pace_create_transaction' === $ajax_request ) {
-			if ( $errors->errors ) {
-				foreach ( $errors->errors as $code => $messages ) {
-					$data = $errors->get_error_data( $code );
-					foreach ( $messages as $message ) {
-						wc_add_notice( $message, 'error', $data );
-					}
-				}
-				wp_send_json_error( array( 'message' => wc_print_notices( true ) ) );
-			} else {
-				$this->create_transaction( $data );
-			}
 		}
 	}
 

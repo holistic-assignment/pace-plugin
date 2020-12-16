@@ -47,7 +47,7 @@
 				type: method,
 				data: ajax_data,
 				success: function( res ) {
-					if ( ! res.success ) {
+					if ( ! res.success || res.result == 'failure' ) {
 						$( document.body ).trigger( 'pace_transaction_error', res );
 					} else {
 						switch ( wc_pace_params['checkout_mode'] ) {
@@ -66,8 +66,8 @@
 		},
 
 		transaction: function() {
-
 			$('#place_order').prop('disabled', true);
+
 			if ( ! wc_pace_gateway.isChosen() ) {
 				return true;
 			}
@@ -151,7 +151,7 @@
 				data: res,
 				success: function( res ) {
 					if ( ! res.success ) {
-						$( document.body ).trigger( 'pace_transaction_error', [ res ] );
+						$( document.body ).trigger( 'pace_transaction_error', res );
 					}
 
 					var redirect = res.data.redirect;
@@ -208,15 +208,19 @@
 		 * @param {Object} res Response result
 		 */
 		onError: function( event, res ) {
-			var message = res.data.message,
-				error_element = $( '<div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout"></div>' ).html( $( message ).addClass( 'woocommerce-error wc-pace-error' ) );
-			$( '.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message' ).remove();
-			wc_pace_gateway.form.prepend( error_element ); // eslint-disable-line max-len
+			var message = res.data ? res.data.message : res.messages;
 
-			if ( $( '.wc-pace-error' ).length ) {
-				$( 'html, body' ).animate({
-					scrollTop: ( $( '.wc-pace-error' ).offset().top - 200 )
-				}, 200 );
+			if ( message ) {
+
+				var	error_element = $( '<div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout"></div>' ).html( $( message ).addClass( 'woocommerce-error wc-pace-error' ) );
+				$( '.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message' ).remove();
+				wc_pace_gateway.form.prepend( error_element ); // eslint-disable-line max-len
+
+				if ( $( '.wc-pace-error' ).length ) {
+					$( 'html, body' ).animate({
+						scrollTop: ( $( '.wc-pace-error' ).offset().top - 200 )
+					}, 200 );
+				}
 			}
 
 			wc_pace_gateway.unBlock();

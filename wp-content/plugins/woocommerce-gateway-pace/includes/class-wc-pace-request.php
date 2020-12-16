@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * WC_Pacenow_Request_Payment class
  */
-class WC_Pace_Request_Payment {
+class WC_Pace_Request_Payment extends WC_Checkout {
 	/**
 	 * Initialize class actions.
 	 */
@@ -33,12 +33,30 @@ class WC_Pace_Request_Payment {
 				throw new Exception( wc_print_notices( true ) );
 			}
 
-			// create order from the posted data
 			do_action( 'woocommerce_pace_before_create_transaction' );
 
-			// trigger process_checkout but just only validation the posted data
-			WC()->checkout->process_checkout();
+			// validate the posted data 
+			// and create order, after created the order
+			// make the request call to Pace's API to create transaction
+			$errors = new WP_Error();
+			$posted_data = $this->get_posted_data();
+			
+			// Validate posted data and cart items before proceeding.
+			$this->validate_checkout( $posted_data, $errors );
 
+			foreach ( $errors->errors as $code => $messages ) {
+				$data = $errors->get_error_data( $code );
+				foreach ( $messages as $message ) {
+					wc_add_notice( $message, 'error', $data );
+				}
+			}
+
+			if ( 0 !== wc_notice_count( 'error' ) ) {
+				throw new Exception( wc_print_notices( $return = true ) );
+			}
+
+			// creat hooks to create the transaction
+			do_action( 'woocommerce_create_transaction_before_checkout', $posted_data );
 		} catch ( Exception $e ) {
 			WC_Pace_Logger::log( 'Error: ' . $e->getMessage() );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
