@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.0.4
+ * Version: 1.0.5
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
