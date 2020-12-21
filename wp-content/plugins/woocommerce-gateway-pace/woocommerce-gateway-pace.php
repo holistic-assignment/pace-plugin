@@ -84,6 +84,11 @@ function woocommerce_gateway_pace_init()
 
 		class WC_PACE_GATEWAY
 		{
+			/**
+			 * Pace settings
+			 * @var array
+			 */
+			private $settings;
 
 			/**
 			 * @var Singleton The reference the *Singleton* instance of this class
@@ -131,6 +136,8 @@ function woocommerce_gateway_pace_init()
 			{
 				add_action('admin_init', array($this, 'install'));
 				$this->init();
+
+				$this->settings = get_option( 'woocommerce_pace_settings' );
 			}
 
 			/**
@@ -155,9 +162,16 @@ function woocommerce_gateway_pace_init()
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
+
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
+
+				/**
+				 * Update order status based on merchanr setting on dashboard
+				 * Values: cancelled | failed
+				 */
+				add_filter( 'woocommerce_pace_cancelled_order_redirect', array($this, 'woocommerce_pace_cancelled_order_redirect_hooks'), 10 ,2 );
 			}
 
 			/**
@@ -215,14 +229,13 @@ function woocommerce_gateway_pace_init()
 			 * Initialize pace's SDK
 			 */
 			public function loaded_pace_script() {
-				$pace_settings = get_option( 'woocommerce_pace_settings' );
-				$is_testmode = isset( $pace_settings['sandBox'] ) && 'yes' === $pace_settings['sandBox'];
-				$is_enabled  = isset( $pace_settings['enabled'] ) && 'yes' === $pace_settings['enabled'];
+				$is_testmode = isset( $this->settings['sandBox'] ) && 'yes' === $this->settings['sandBox'];
+				$is_enabled  = isset( $this->settings['enabled'] ) && 'yes' === $this->settings['enabled'];
 				$pace_sdk = $is_testmode ? 'https://pay-playground.pacenow.co/pace-pay.js' : 'https://pay.pacenow.co/pace-pay.js';
 				$suffix = $is_testmode ? '' : '.min';
 
 				$fallback_params = array();
-				$fallback_params['flag'] = $pace_settings['enable_fallback'];
+				$fallback_params['flag'] = $this->settings['enable_fallback'];
 				wp_register_script('woocommerce_pace_init', plugins_url('assets/js/pace' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
 				wp_localize_script('woocommerce_pace_init', 'fallback_params', $fallback_params);
 				wp_register_script('woocommerce_pace_widget', plugins_url('assets/js/pace-widget' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
@@ -234,7 +247,7 @@ function woocommerce_gateway_pace_init()
 					$pace_params = array();
 					$pace_params['ajaxurl'] = WC_AJAX::get_endpoint('%%endpoint%%');
 					$pace_params['pace_nonce'] = wp_create_nonce('_wc_pace_nonce');
-					$pace_params['checkout_mode'] = $pace_settings['checkout_mode'];
+					$pace_params['checkout_mode'] = $this->settings['checkout_mode'];
 
 					wp_register_script('woocommerce_pace_checkout', plugins_url('assets/js/pace-checkout' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
 					wp_localize_script('woocommerce_pace_checkout', 'wc_pace_params', $pace_params);
@@ -345,6 +358,26 @@ function woocommerce_gateway_pace_init()
 				}
 
 				return $price;
+			}
+
+			/**
+			 * Update order status based on merchant setting
+			 * 
+			 * @param  String 	$cancelled_url 	cancel page url
+			 * @param  WC_Order $order       
+			 * @return String 					cancel page url after filter
+			 * @since 1.0.7
+			 */
+			public function woocommerce_pace_cancelled_order_redirect_hooks( $cancelled_url, $order ) {
+				$order->update_status( $this->settings['transaction_failed'], __( "Order {$this->settings['transaction_failed']} by customer.", 'woocommerce' ) );
+				wc_add_notice( apply_filters( 'woocommerce_order_cancelled_notice', __( "Your order was {$this->settings['transaction_failed']}.", 'woocommerce' ) ), apply_filters( 'woocommerce_order_cancelled_notice_type', 'notice' ) );
+
+				$http_query = wp_parse_url( $cancelled_url );
+				wp_parse_str( $http_query['query'], $http_query_params );
+
+				unset( $http_query_params['_wpnonce'] );
+
+				return site_url() . $http_query['path'] . '?' . http_build_query( $http_query_params );
 			}
 
 			/**
