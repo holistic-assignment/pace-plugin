@@ -146,7 +146,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * @since 1.0.0
 	 */
 	public function admin_options() {
-		printf( '<img id="%s" src="%s">', 'pace-settings-logo', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/pace_logo.png' );
+		printf( '<img id="%s" src="%s">', 'pace-settings-logo', WC_PACE_GATEWAY_PLUGIN_URL . '/assets/image/logo.png' );
 		parent::admin_options();
 	}
 
