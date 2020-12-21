@@ -408,6 +408,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 */
 	public function woocommerce_create_transaction_before_checkout_hooks( $posted_data ) {
 		try {
+			// update cart total
+			WC()->cart->calculate_totals();
 			// create an order from posted data
 			$order_id = WC()->checkout->create_order( $posted_data );
 
