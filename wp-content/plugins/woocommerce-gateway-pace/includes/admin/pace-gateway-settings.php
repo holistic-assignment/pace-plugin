@@ -19,13 +19,13 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default'     => 'no'
 	),
 	'checkout_mode' => array(
-		'title'       => __( 'Pay With Pace Mode', 'woocommerce-pace-gateway' ),
+		'title'       => __( 'Pay with Pace mode', 'woocommerce-pace-gateway' ),
 		'type'        => 'select',
 		'options'	  => array(
-			'popup' => __( 'Popup', 'woocommerce-pace-gateway' ),
+			'popup'    => __( 'Popup', 'woocommerce-pace-gateway' ),
 			'redirect' => __( 'Redirect', 'woocommerce-pace-gateway' )
 		),
-		'description' => 'Select the checkout mode.',
+		'description' => __( 'Select the checkout mode.', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true,
 		'default'     => 'popup'
 	),
@@ -35,6 +35,17 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'description' => __( 'This controls the title which the user sees during checkout.', 'woocommerce-pace-gateway' ),
 		'default'     => __( 'Pay with Pace', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true,
+	),
+	'transaction_failed' => array(
+		'title'	      => __( 'Order state after payment page is abandoned', 'woocommerce-pace-gateway' ),
+		'type'		  => 'select',
+		'options'     => array(
+			'cancelled' => 'Cancelled',
+			'failed'    => 'Failed'
+		),
+		'description' => __( 'Updated the order status when transaction is cancelled or failed', 'woocommerce-pace-gateway' ),
+		'desc_tip'    => true, 
+		'default'     => 'cancelled'
 	),
 	'note' => array(
 		'title'		  => __( 'API Credentials', 'woocommerce-pace-gateway' ),
@@ -180,22 +191,18 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	'checkout_text_primary_color' => array(
 		'title' => __( 'Text primary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
-
 	),
 	'checkout_text_second_color' => array(
 		'title' => __( 'Text secondary color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
-
 	),
 	'checkout_text_timeline_color' => array(
 		'title' => __( 'Text timeline Color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
-
 	),
 	'checkout_background_color' => array(
 		'title' => __( 'Background Color', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
-
 	),
 	'checkout_foreground_color' => array(
 		'title' => __( 'Foreground Color', 'woocommerce-pace-gateway' ),

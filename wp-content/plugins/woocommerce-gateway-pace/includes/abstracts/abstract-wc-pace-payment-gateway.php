@@ -103,9 +103,9 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 
 	/**
 	 * Store order extra meta by from a transaction
+	 * 
 	 * @param  Array 	$transaction Pacenow API response
 	 * @param  WC_Order $order       Checkout's order
-	 * @return void
 	 */
 	public function process_response( $transaction, $order ) {
 		$order_id = $order->get_id();
@@ -116,30 +116,33 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 
 		$transaction_id = empty( $transaction['transactionId'] ) ? $order->get_transaction_id() : $transaction['transactionId'];
 
+		/**
+		 * Update the order status based on Pace transaction status
+		 * Default status is pending_confirmation
+		 * 
+		 * @since 1.0.5
+		 */
 		switch ( $transaction['status'] ) {
-
-			case 'pending':
+			case 'pending_confirmation':
 				$order_stock_reduced = $order->get_meta( '_order_stock_reduced', true );
 
 				if ( ! $order_stock_reduced ) {
 					wc_reduce_stock_levels( $order_id );
 				}
 
-				$order->update_status( 'on-hold', sprintf( __( 'Pace\'s transaction awaiting payment: %s.', 'woocommerce-pace-gateway' ), $transaction_id ) );
+				$order->update_status( 'on-hold', sprintf( __( "Pace's transaction awaiting payment: %s.", 'woocommerce-pace-gateway' ), $transaction_id ) );
 				break;
-
-			case 'success':
+			case 'approved':
 				$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction_id );
 				$order->payment_complete();
 				$order->add_order_note( $message );
 				break;
-
-			case 'failed':
-				$localized_message = __( 'Payment processing failed. Please retry.', 'woocommerce-pace-gateway' );
+			case 'cancelled':
+			case 'expired':
+				$localized_message = __( "The transaction has {$transaction['status']}. Please try your payment again or contact the admin.", 'woocommerce-pace-gateway' );
 				$order->add_order_note( $localized_message );
 				throw new Exception( $localized_message );
 				break;
-
 			default:
 				# code...
 				break;
