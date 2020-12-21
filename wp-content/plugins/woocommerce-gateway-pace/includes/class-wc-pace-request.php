@@ -35,9 +35,8 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 
 			do_action( 'woocommerce_pace_before_create_transaction' );
 
-			// validate the posted data 
-			// and create order, after created the order
-			// make the request call to Pace's API to create transaction
+			// validate the posted data and create order
+			// after created order, make the request call to Pace's API to create transaction
 			$errors = new WP_Error();
 			$posted_data = $this->get_posted_data();
 			
@@ -71,6 +70,7 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 	public function woocommerce_pace_cancelled_order() {
 		try {
 			$order_id = WC()->session->get( 'order_awaiting_payment' );
+
 			if ( ! $order_id ) {
 				throw new Exception( __( 'Cannot find order Id or transaction Id.', 'woocommerce-pace-gateway' ) );
 			}
@@ -82,11 +82,10 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 			}
 
 			$cancelled_url = apply_filters( 'woocommerce_pace_cancelled_order_redirect', $order->get_cancel_order_url_raw(), $order );
-			
-			// WC()->session->set( 'order_awaiting_payment', false );
 
 			do_action( 'woocommerce_cancelled_order', $order->get_id() );
 
+			// the order will be updated the status to canceled/failed base on the merchant's settings on the Cancel page
 			wp_send_json_success( array( 'redirect' => $cancelled_url ) );
 
 		} catch ( Exception $e ) {

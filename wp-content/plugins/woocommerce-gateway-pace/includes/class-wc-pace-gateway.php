@@ -77,7 +77,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$this->enabled       = $this->get_option('enabled');
 		$this->testmode	     = 'yes' === $this->get_option('sandBox');
 		$this->description   = $this->get_description();
-		$this->checkout_mode = $this->get_option( 'checkout_mode' );
+		$this->checkout_mode = $this->get_option('checkout_mode');
+		$this->order_status_failed = $this->get_option('transaction_failed'); /* the order status that the merchant settings based on the transaction status */
 
 		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
 		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
@@ -329,9 +330,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	/**
 	 * Customizer Gateway process payment
 	 * 	
-	 * @param  WC_Order $order_id The order id has just been created
-	 *
-	 * @throws Exception If payment will not be accepted.
+	 * @param  WC_Order 	$order_id 	The order id has just been created
+	 * @throws Exception  				If payment will not be accepted.
 	 * @return array|void
 	 */
 	public function process_payment($order_id)
@@ -361,7 +361,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			// convert transaction to array
 			$transaction = json_decode($transaction, true);
 
-			$process_response = $this->process_response($transaction, $order);
+			$this->process_response($transaction, $order);
 
 			// make cart is empty
 			if (isset(WC()->cart)) {
@@ -373,7 +373,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 			return array(
 				'result'      => 'success',
-				'redirect'    => isset($process_response['redirect']) ? esc_url($process_response['redirect']) : $this->get_return_url($order),
+				'redirect'    => isset($transaction['redirect']) ? esc_url($transaction['redirect']) : $this->get_return_url($order),
 				'transaction' => $transaction
 			);
 		} catch (Exception $e) {
@@ -408,11 +408,11 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 */
 	public function woocommerce_create_transaction_before_checkout_hooks( $posted_data ) {
 		try {
-			// create an order from posted data
+			// create the order from posted data
 			$order_id = WC()->checkout->create_order( $posted_data );
-
+				
 			if ( is_wp_error( $order_id ) ) {
-				throw new Exception( $order_id->get_error_message() );
+				throw new Exception( __( $order_id->get_error_messages(), 'woocommerce-pace-gateway' ) );
 			}
 			
 			$order = wc_get_order( $order_id );
@@ -421,24 +421,41 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				throw new Exception( __( 'Unable to create order.', 'woocommerce' ) );
 			}
 
-			// store the pre-order id to use later
+			// store the pre-order id for later use
 			WC()->session->set( 'order_awaiting_payment', $order_id );
 
 
 			// validate pacenow's plan
 			WC_Pace_Helper::validate_create_transaction( $order );
 
+			// remove order transaction id if exist
+			// to make sure the transaction is not duplicate on one order
 			if($order->get_transaction_id()) {
 				self::cancel_transaction( $order );
-		   	} 
+		   	}
 
 			// send the request to Pacenow API to create transaction
 			$transaction = $this->make_request_create_transaction( $order );
 
-			if ($transaction->transactionID) {
-				$order->set_transaction_id($transaction->transactionID);
-				$order->save();
+			if ( isset( $transaction->error ) ) {
+				throw new Exception( __( $transaction->error->message, 'woocommerce-pace-gateway' ) );
 			}
+			
+			/**
+			 * Update the order status based on merchant's setting on Dashboard
+			 * 
+			 * @throws String
+			 */
+			if ( 
+				isset( $transaction->status ) && 
+				( $transaction->status === 'cancelled' || $transaction->status === 'expired' ) ) 
+			{
+				$order->update_status( $this->order_status_failed, $note = __( 'Have trouble creating a Pace transactions.', 'woocommerce-pace-gateway' ) );
+				throw new Exception( __( 'There is a problem paying with Pace. Please try checking again later or try another payment source.', 'woocommerce-pace-gateway' ) );
+			}
+
+			$order->set_transaction_id( $transaction->transactionID );
+			$order->save();
 			
 			wp_send_json_success( $transaction );
 		} catch ( Exception $e ) {

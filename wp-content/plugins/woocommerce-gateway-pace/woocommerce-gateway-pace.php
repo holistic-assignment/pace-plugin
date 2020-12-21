@@ -245,33 +245,47 @@ function woocommerce_gateway_pace_init()
 			}
 
 			/**
-			 * handle cancel pacenow's transaction in admin pannel.
+			 * Handle cancel Pace transaction in dashboard
 			 * 
-			 * @param int $order_id  WC_Order::id
-			 * @param string $from old order status
-			 * @param string $to new order status
-			 * @param WC_Order $instance WC_Order:instance
-			 * @version 1.0.0
+			 * @param int 		$order_id  		WC_Order::id
+			 * @param string 	$from old order status
+			 * @param string 	$to new order 	status
+			 * @param WC_Order 	$instance 		WC_Order:instance
+			 * 
 			 * @since 1.0.1
+			 * @version 1.0.0
 			 */
 			public function cancel_payment($order_id, $from, $to, $instance)
 			{
-				$order = wc_get_order( $order_id );
+				try {
+					$order = wc_get_order( $order_id );
 
-				if ( 'cancelled' === $to and 'pace' === strtolower( $order->get_payment_method_title() ) ) {
-					// Cancelled Pace transaction
-					$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
-					
-					if (isset($response->error)) {
-						$localized_message = __( 'Cancel order failed because Pace\'s transaction cannot be canceled.', 'woocommerce-pace-gateway' );
-						add_filter( 'woocommerce_order_cancelled_notice', function() use ( $localized_message ) {
-							return $localized_message;
-						} );
-						$order->add_order_note( $localized_message );
-						// retreive order's old status
-						$order->set_status(wc_clean($from), '', true);
-						$order->save();
+					if ( is_wp_error( $order ) ) {
+						throw new Exception( __( $order->get_error_messages(), 'woocommerce-pace-gateway' ) );
 					}
+
+					if ( 'cancelled' === $to AND 'pace' === $order->get_payment_method() ) {
+						// Cancelled Pace transaction
+						$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
+						
+						if (isset($response->error)) {
+							$localized_message = __( "There is a problem canceling the order. {$response->error->message}", 'woocommerce-pace-gateway' );
+							
+							add_filter( 'woocommerce_order_cancelled_notice', function() use ( $localized_message ) {
+								return $localized_message;
+							} );
+
+							throw new Exception( $localized_message );
+						}
+					}
+				} catch (Exception $e) {
+					WC_Pace_Logger::log( 'Error: ' . $e->getMessage() );
+
+					$order->add_order_note( $e->getMessage() );
+
+					// back to the previous status
+					$order->set_status(wc_clean($from), '', true);
+					$order->save();
 				}
 			}
 

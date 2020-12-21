@@ -1,4 +1,6 @@
 (function ($) {
+	"use strict";
+
 	var wc_pace_gateway = {
 		timer: false,
 		form_checkout: $( document ).find( 'form.checkout' ) || $( document ).find( 'form.woocommerce-checkout' ),
@@ -41,7 +43,8 @@
 			ajax_data['security'] = wc_pace_params['pace_nonce']; /* setup nonce data */
 			// convert to object
 			ajax_data = Object.assign( {}, ajax_data );
-			ajax_data['payment_method'] = 'pace'
+			ajax_data['payment_method'] = 'pace';
+			
 			$.ajax( {
 				url:  wc_pace_gateway.getAjaxURL( 'create_transaction' ),
 				type: method,
@@ -131,8 +134,8 @@
 		 * @param {object} data 
 		 */
 		transaction_completed: function( data ) {
-			// add status to response
-			data['status'] = 'success';
+			// add the status to transaction
+			data['status'] = 'approved';
 			// handle transaction response
 			wc_pace_gateway.preprareSource( data );
 			
