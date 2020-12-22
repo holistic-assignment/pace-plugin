@@ -222,5 +222,11 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'type'        => 'checkbox',
 		'description' => '',
 		'default'     => 'no'
+	),
+	'interval_cron' => array(
+		'title'       => __( 'Set time run cron', 'woocommerce-pace-gateway' ),
+		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
+		'type'  => 'text',
+		'default'     => 300
 	)
 ) );

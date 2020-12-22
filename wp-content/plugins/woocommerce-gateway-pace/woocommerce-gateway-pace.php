@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.0.6
+ * Version: 1.1.0
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -60,6 +60,85 @@ function woocommerce_pace_gateway_wc_not_supported()
  */
 add_action('plugins_loaded', 'woocommerce_gateway_pace_init');
 
+
+function compare_transaction()
+{
+	$params = [
+		"from" =>  date('yy-m-01'),
+		"to"	=> date('yy-m-d')
+	];
+
+	$list_transaction = WC_Pace_API::request($params, "checkouts/list");
+	if ($list_transaction->items) {
+		foreach ($list_transaction->items as $transaction) {
+			foreach ($transaction as $value) {
+
+				$order = wc_get_order($value->referenceID);
+
+				if ($order) {
+					if ($order->get_payment_method() == "pace") {
+
+						switch ($value->status) {
+							case 'cancelled':
+								if ($order->get_status() != "cancelled") {
+									WC_Pace_Logger::log("Convert ".$order->get_id() ." from " .$order->get_status()   . " wc-cancelled");
+									$order->set_status("wc-cancelled");
+									$order->save();
+								}
+								break;
+							case 'pending_confirmation':
+								if ($order->get_status() != "pending") {
+									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ".$order->get_status()   . " wc-pending");
+									$order->set_status("wc-pending");
+									$order->save();
+								}
+								break;
+							case 'approved':
+								if ($order->get_status() != "completed") {
+									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ". $order->get_status()  . "wc-approved");
+									$order->set_status("wc-completed");
+									$order->save();
+								}
+								break;
+
+							case 'expired':
+								if ($order->get_status() != "failed") {
+									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ". $order->get_status() . "wc-failied");
+									$order->set_status("wc-failed");
+									$order->save();
+								}
+								break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+add_action('hook_compare_transaction', 'compare_transaction');
+add_action('check_cron_exist', 'handle_add_cron');
+function handle_add_cron()
+{
+	$pace_settings = get_option('woocommerce_pace_settings');
+	$time =  isset($pace_settings['interval_cron']) && is_numeric($pace_settings['interval_cron']) ? (int)$pace_settings['interval_cron'] : 300;
+	if (!check_hook_cron_exist(["hook_compare_transaction", "pending"])) {
+		as_schedule_single_action(time() + $time, 'hook_compare_transaction');
+	}
+}
+
+function check_hook_cron_exist($args)
+{
+	global $wpdb;
+	$query = "SELECT a.action_id FROM wp_actionscheduler_actions a";
+	$query  .= " WHERE a.hook=%s";
+
+	$query  .= " AND a.status=%s  order by action_id desc LIMIT 1";
+	$query = $wpdb->prepare($query, $args);
+
+	$id = $wpdb->get_var($query);
+	return $id;
+}
 
 // add the filter 
 
@@ -166,7 +245,7 @@ function woocommerce_gateway_pace_init()
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
-
+				do_action('check_cron_exist');
 				/**
 				 * Update order status based on merchanr setting on dashboard
 				 * Values: cancelled | failed
