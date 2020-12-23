@@ -81,6 +81,14 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 				throw new Exception( 'woocommerce_api_cannot_create_order', sprintf( __( 'Cannot create order: %s', 'woocommerce-pace-gateway' ), implode( ', ', $order->get_error_messages() ) ), 400 );
 			}
 
+			// call API to cancel transaction before update wc order
+			$do_cancel = WC_Pace_Gateway_Payment::cancel_transaction( $order );
+
+			if ( isset( $do_cancel->error ) ) {
+				$localized_message = __( $do_cancel->error->message ? $do_cancel->error->message : 'There was an error canceling the transaction.', 'woocommerce-pace-gateway' );
+				throw new Exception( $localized_message );
+			}
+
 			$cancelled_url = apply_filters( 'woocommerce_pace_cancelled_order_redirect', $order->get_cancel_order_url_raw(), $order );
 
 			do_action( 'woocommerce_cancelled_order', $order->get_id() );

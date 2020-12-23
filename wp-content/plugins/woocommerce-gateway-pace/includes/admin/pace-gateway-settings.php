@@ -37,15 +37,26 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'desc_tip'    => true,
 	),
 	'transaction_failed' => array(
-		'title'	      => __( 'Order state after payment page is abandoned', 'woocommerce-pace-gateway' ),
+		'title'	      => __( 'Order status when transaction is cancelled', 'woocommerce-pace-gateway' ),
 		'type'		  => 'select',
 		'options'     => array(
 			'cancelled' => 'Cancelled',
 			'failed'    => 'Failed'
 		),
-		'description' => __( 'Updated the order status when transaction is cancelled or failed', 'woocommerce-pace-gateway' ),
+		'description' => __( 'Updated the order status when transaction is cancelled', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true, 
 		'default'     => 'cancelled'
+	),
+	'transaction_expired' => array(
+		'title' 	  => __( 'Order status when transaction is expired', 'woocommerce-pace-gateway' ),
+		'type'		  => 'select',
+		'options'	  => array(
+			'cancelled' => 'Cancelled',
+			'failed'    => 'Failed'
+		),
+		'description' => __( 'Updated the order status when transaction is expired', 'woocommerce-pace-gateway' ),
+		'desc_tip'    => true, 
+		'default'     => 'failed'
 	),
 	'note' => array(
 		'title'		  => __( 'API Credentials', 'woocommerce-pace-gateway' ),

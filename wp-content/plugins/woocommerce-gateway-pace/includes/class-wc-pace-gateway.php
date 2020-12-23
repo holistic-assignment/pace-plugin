@@ -78,7 +78,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$this->testmode	     = 'yes' === $this->get_option('sandBox');
 		$this->description   = $this->get_description();
 		$this->checkout_mode = $this->get_option('checkout_mode');
-		$this->order_status_failed = $this->get_option('transaction_failed'); /* the order status that the merchant settings based on the transaction status */
+		$this->order_status_failed = $this->get_option('transaction_failed'); /* update Order status when transaction is cancelled follow merchant setting */
+		$this->order_status_expire = $this->get_option('transaction_expired');
 
 		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
 		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
@@ -442,7 +443,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			}
 			
 			/**
-			 * Update the order status based on merchant's setting on Dashboard
+			 * Update the order status when transaction is cancelled or expired
+			 * based on merchant's setting on Dashboard
 			 * 
 			 * @throws String
 			 */
@@ -450,7 +452,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				isset( $transaction->status ) && 
 				( $transaction->status === 'cancelled' || $transaction->status === 'expired' ) ) 
 			{
-				$order->update_status( $this->order_status_failed, $note = __( 'Have trouble creating a Pace transactions.', 'woocommerce-pace-gateway' ) );
+				$order_status = $transaction->status === 'cancelled' ? $this->order_status_failed : $this->order_status_expire;
+				$order->update_status( $order_status, $note = __( 'Having trouble creating a Pace transactions.', 'woocommerce-pace-gateway' ) );
 				throw new Exception( __( 'There is a problem paying with Pace. Please try checking again later or try another payment source.', 'woocommerce-pace-gateway' ) );
 			}
 
