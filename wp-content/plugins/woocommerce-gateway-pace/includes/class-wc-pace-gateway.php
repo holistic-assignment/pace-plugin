@@ -439,7 +439,11 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$transaction = $this->make_request_create_transaction( $order );
 
 			if ( isset( $transaction->error ) ) {
-				throw new Exception( __( $transaction->error->message, 'woocommerce-pace-gateway' ) );
+				$localized_message = __( 
+					sprintf( 'Your transaction could not be created on Pace. Please contact our team at support@pacenow.co. %s', $transaction->correlation_id ), 
+					'woocommerce-pace-gateway' 
+				);
+				throw new Exception( __( $localized_message, 'woocommerce-pace-gateway' ) );
 			}
 			
 			/**

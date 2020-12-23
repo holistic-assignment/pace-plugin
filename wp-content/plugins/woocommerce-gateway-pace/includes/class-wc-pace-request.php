@@ -88,7 +88,8 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 			$do_cancel = WC_Pace_Gateway_Payment::cancel_transaction( $order );
 
 			if ( isset( $do_cancel->error ) ) {
-				$localized_message = __( $do_cancel->error->message ? $do_cancel->error->message : 'There was an error canceling the transaction.', 'woocommerce-pace-gateway' );
+				$error_message = $do_cancel->error->message ? $do_cancel->error->message : 'There was an error canceling the transaction.';
+				$localized_message = __( sprintf( '%s %s', $error_message, $do_cancel->correlation_id ), 'woocommerce-pace-gateway' );
 				throw new Exception( $localized_message );
 			}
 
