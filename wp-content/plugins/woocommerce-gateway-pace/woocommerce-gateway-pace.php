@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.1
+ * Version: 1.1.2
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -72,49 +72,53 @@ function compare_transaction()
 	$expired_status = !!$pace_settings['transaction_expired'] ? "wc-" . $pace_settings['transaction_expired'] : "wc-failied";
 	$list_transaction = WC_Pace_API::request($params, "checkouts/list");
 	if ($list_transaction->items) {
-		foreach ($list_transaction->items as $transaction) {
-			foreach ($transaction as $value) {
+		// remove duplicate order
+		$orders = [];
+		foreach($list_transaction->items as $key => $transaction ) {
+			foreach($transaction  as $value) {
+				$orders[$value->referenceID] = $value;
+			}
+		}
+	
+		foreach($orders as $key => $value) {
+			$order = wc_get_order($value->referenceID);
+			if ($order) {
+				if ($order->get_payment_method() == "pace") {
+					switch ($value->status) {
+						case 'cancelled':
+							if ($order->get_status() != "cancelled") {
+								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-cancelled");
+								$order->set_status($fail_status);
+								$order->save();
+							}
+							break;
+						case 'pending_confirmation':
+							if ($order->get_status() != "pending") {
+								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-pending");
+								$order->set_status("wc-pending");
+								$order->save();
+							}
+							break;
+						case 'approved':
+							if ($order->get_status() != "completed") {
+								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()  . "wc-approved");
+								$order->set_status("wc-completed");
+								$order->save();
+							}
+							break;
 
-				$order = wc_get_order($value->referenceID);
-
-				if ($order) {
-					if ($order->get_payment_method() == "pace") {
-
-						switch ($value->status) {
-							case 'cancelled':
-								if ($order->get_status() != "cancelled") {
-									WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-cancelled");
-									$order->set_status($fail_status);
-									$order->save();
-								}
-								break;
-							case 'pending_confirmation':
-								if ($order->get_status() != "pending") {
-									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ".$order->get_status()   . " wc-pending");
-									$order->set_status("wc-pending");
-									$order->save();
-								}
-								break;
-							case 'approved':
-								if ($order->get_status() != "completed") {
-									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ". $order->get_status()  . "wc-approved");
-									$order->set_status("wc-completed");
-									$order->save();
-								}
-								break;
-
-							case 'expired':
-								if ($order->get_status() != "failed") {
-									WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "wc-failied");
-									$order->set_status($expired_status);
-									$order->save();
-								}
-								break;
-						}
+						case 'expired':
+							if ($order->get_status() != "failed") {
+								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "wc-failied");
+								$order->set_status($expired_status);
+								$order->save();
+							}
+							break;
 					}
 				}
 			}
 		}
+		
 	}
 }
 
