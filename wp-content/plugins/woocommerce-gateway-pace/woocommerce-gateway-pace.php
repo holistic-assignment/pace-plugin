@@ -67,7 +67,9 @@ function compare_transaction()
 		"from" =>  date('yy-m-01'),
 		"to"	=> date('yy-m-d')
 	];
-
+	$pace_settings = get_option('woocommerce_pace_settings');
+	$fail_status = !!$pace_settings['transaction_failed'] ? "wc-" . $pace_settings['transaction_failed'] : "wc-cancelled";
+	$expired_status = !!$pace_settings['transaction_expired'] ? "wc-" . $pace_settings['transaction_expired'] : "wc-failied";
 	$list_transaction = WC_Pace_API::request($params, "checkouts/list");
 	if ($list_transaction->items) {
 		foreach ($list_transaction->items as $transaction) {
@@ -81,8 +83,8 @@ function compare_transaction()
 						switch ($value->status) {
 							case 'cancelled':
 								if ($order->get_status() != "cancelled") {
-									WC_Pace_Logger::log("Convert ".$order->get_id() ." from " .$order->get_status()   . " wc-cancelled");
-									$order->set_status("wc-cancelled");
+									WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-cancelled");
+									$order->set_status($fail_status);
 									$order->save();
 								}
 								break;
@@ -103,8 +105,8 @@ function compare_transaction()
 
 							case 'expired':
 								if ($order->get_status() != "failed") {
-									WC_Pace_Logger::log("Convert ".$order->get_id() ." from ". $order->get_status() . "wc-failied");
-									$order->set_status("wc-failed");
+									WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "wc-failied");
+									$order->set_status($expired_status);
 									$order->save();
 								}
 								break;
@@ -122,7 +124,7 @@ function handle_add_cron()
 {
 	$pace_settings = get_option('woocommerce_pace_settings');
 	$time =  isset($pace_settings['interval_cron']) && is_numeric($pace_settings['interval_cron']) ? (int)$pace_settings['interval_cron'] : 300;
-	if (!check_hook_cron_exist(["hook_compare_transaction", "pending"])) {
+	if (!check_hook_cron_exist(["hook_compare_transaction", "complete", "failed"])) {
 		as_schedule_single_action(time() + $time, 'hook_compare_transaction');
 	}
 }
@@ -133,7 +135,7 @@ function check_hook_cron_exist($args)
 	$query = "SELECT a.action_id FROM wp_actionscheduler_actions a";
 	$query  .= " WHERE a.hook=%s";
 
-	$query  .= " AND a.status=%s  order by action_id desc LIMIT 1";
+	$query  .= " AND a.status<> %s and a.status <> %s   order by action_id desc LIMIT 1";
 	$query = $wpdb->prepare($query, $args);
 
 	$id = $wpdb->get_var($query);
