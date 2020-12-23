@@ -47,6 +47,10 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'desc_tip'    => true, 
 		'default'     => 'cancelled'
 	),
+	/**
+	 * Update Order status when transaction is expired
+	 * @since 1.1.1
+	 */
 	'transaction_expired' => array(
 		'title' 	  => __( 'Order status when transaction is expired', 'woocommerce-pace-gateway' ),
 		'type'		  => 'select',
