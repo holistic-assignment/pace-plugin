@@ -1,5 +1,6 @@
 .woocommerce_page_wc-settings h3.wc-settings-sub-title#woocommerce_pace_customize_note,
 .woocommerce_page_wc-settings h3.wc-settings-sub-title#woocommerce_pace_note,
-.woocommerce_page_wc-settings h3.wc-settings-sub-title#woocommerce_pace_plugins_options {
+.woocommerce_page_wc-settings h3.wc-settings-sub-title#woocommerce_pace_plugins_options,
+.woocommerce_page_wc-settings h3.wc-settings-sub-title#woocommerce_pace_unpaid_title {
 	font-size: 24px !important;
 }

@@ -36,30 +36,35 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default'     => __( 'Pay with Pace', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true,
 	),
+	/**
+	 * Add manage unpaid orders sections
+	 * @since 1.1.3
+	 */
+	'unpaid_title' => array(
+		'title' 	  => __( 'Manage Unpaid Orders', 'woocommerce-pace-gateway' ),
+		'type'	 	  => 'title',
+		'description' => __( 'Manage your unpaid orders by choosing the status you want them to have when their corresponding Pace transactions have changed status.', 'woocommerce-pace-gateway' )
+	),
 	'transaction_failed' => array(
-		'title'	      => __( 'Order status when transaction is cancelled', 'woocommerce-pace-gateway' ),
+		'title'	      => __( 'Order status when Pace transaction is cancelled', 'woocommerce-pace-gateway' ),
 		'type'		  => 'select',
 		'options'     => array(
 			'cancelled' => 'Cancelled',
 			'failed'    => 'Failed'
 		),
-		'description' => __( 'Updated the order status when transaction is cancelled', 'woocommerce-pace-gateway' ),
-		'desc_tip'    => true, 
 		'default'     => 'cancelled'
 	),
 	/**
 	 * Update Order status when transaction is expired
 	 * @since 1.1.1
-	 */
+	 */	
 	'transaction_expired' => array(
-		'title' 	  => __( 'Order status when transaction is expired', 'woocommerce-pace-gateway' ),
+		'title' 	  => __( 'Order status when Pace transaction has expired', 'woocommerce-pace-gateway' ),
 		'type'		  => 'select',
 		'options'	  => array(
 			'cancelled' => 'Cancelled',
 			'failed'    => 'Failed'
 		),
-		'description' => __( 'Updated the order status when transaction is expired', 'woocommerce-pace-gateway' ),
-		'desc_tip'    => true, 
 		'default'     => 'failed'
 	),
 	'note' => array(
@@ -239,9 +244,16 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default'     => 'no'
 	),
 	'interval_cron' => array(
-		'title'       => __( 'Set time run cron', 'woocommerce-pace-gateway' ),
+		'title'       => __( 'Sync order status', 'woocommerce-pace-gateway' ),
 		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
-		'type'  => 'text',
-		'default'     => 300
+		'type'  	  => 'select',
+		'options'     => array(
+			'5'  => 'Every 5 minutes',
+			'15' => 'Every 15 minutes',
+			'60' => 'Every 60 minutes',
+		),
+		'description' => __( "Time interval to automatically sync the orders status with Pace's transactions status", 'woocommerce-pace-gateway' ),
+		'desc_tip'	  => true,
+		'default'     => 5
 	)
 ) );
