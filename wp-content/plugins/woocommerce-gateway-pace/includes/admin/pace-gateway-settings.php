@@ -246,14 +246,14 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	'interval_cron' => array(
 		'title'       => __( 'Sync order status', 'woocommerce-pace-gateway' ),
 		'label'       => __( ' ', 'woocommerce-pace-gateway' ),
-		'type'  	  => 'select',
-		'options'     => array(
-			'5'  => 'Every 5 minutes',
-			'15' => 'Every 15 minutes',
-			'60' => 'Every 60 minutes',
+		'type'        => 'select',
+		'options'	  => array(
+			'300'  => __( 'Every 5 minutes', 'woocommerce-pace-gateway' ),
+			'900'  => __( 'Every 15 minutes', 'woocommerce-pace-gateway' ),
+			'3600' => __( 'Every 30 minutes', 'woocommerce-pace-gateway' )
 		),
-		'description' => __( "Time interval to automatically sync the orders status with Pace's transactions status", 'woocommerce-pace-gateway' ),
-		'desc_tip'	  => true,
-		'default'     => 5
+		'desc_tip'    => true,
+		'description' => __( "Time interval to automatically sync the orders status with Pace's transactions status.", 'woocommerce-pace-gateway' ),
+		'default'     => 300
 	)
 ) );
