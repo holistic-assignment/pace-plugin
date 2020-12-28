@@ -36,37 +36,6 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 		'default'     => __( 'Pay with Pace', 'woocommerce-pace-gateway' ),
 		'desc_tip'    => true,
 	),
-	/**
-	 * Add manage unpaid orders sections
-	 * @since 1.1.3
-	 */
-	'unpaid_title' => array(
-		'title' 	  => __( 'Manage Unpaid Orders', 'woocommerce-pace-gateway' ),
-		'type'	 	  => 'title',
-		'description' => __( 'Manage your unpaid orders by choosing the status you want them to have when their corresponding Pace transactions have changed status.', 'woocommerce-pace-gateway' )
-	),
-	'transaction_failed' => array(
-		'title'	      => __( 'Order status when Pace transaction is cancelled', 'woocommerce-pace-gateway' ),
-		'type'		  => 'select',
-		'options'     => array(
-			'cancelled' => 'Cancelled',
-			'failed'    => 'Failed'
-		),
-		'default'     => 'cancelled'
-	),
-	/**
-	 * Update Order status when transaction is expired
-	 * @since 1.1.1
-	 */	
-	'transaction_expired' => array(
-		'title' 	  => __( 'Order status when Pace transaction has expired', 'woocommerce-pace-gateway' ),
-		'type'		  => 'select',
-		'options'	  => array(
-			'cancelled' => 'Cancelled',
-			'failed'    => 'Failed'
-		),
-		'default'     => 'failed'
-	),
 	'note' => array(
 		'title'		  => __( 'API Credentials', 'woocommerce-pace-gateway' ),
 		'type'		  => 'title',
@@ -231,6 +200,37 @@ return apply_filters( 'customizer-gateway-setting-fields', array(
 	'checkout_fontsize' => array(
 		'title' => __( 'Fontsize', 'woocommerce-pace-gateway' ),
 		'type'  => 'text',
+	),
+	/**
+	 * Add manage unpaid orders sections
+	 * @since 1.1.3
+	 */
+	'unpaid_title' => array(
+		'title' 	  => __( 'Manage Unpaid Orders', 'woocommerce-pace-gateway' ),
+		'type'	 	  => 'title',
+		'description' => __( 'Manage your unpaid orders by choosing the status you want them to have when their corresponding Pace transactions have changed status.', 'woocommerce-pace-gateway' )
+	),
+	'transaction_failed' => array(
+		'title'	      => __( 'Order status when Pace transaction is cancelled', 'woocommerce-pace-gateway' ),
+		'type'		  => 'select',
+		'options'     => array(
+			'cancelled' => 'Cancelled',
+			'failed'    => 'Failed'
+		),
+		'default'     => 'cancelled'
+	),
+	/**
+	 * Update Order status when transaction is expired
+	 * @since 1.1.1
+	 */	
+	'transaction_expired' => array(
+		'title' 	  => __( 'Order status when Pace transaction has expired', 'woocommerce-pace-gateway' ),
+		'type'		  => 'select',
+		'options'	  => array(
+			'cancelled' => 'Cancelled',
+			'failed'    => 'Failed'
+		),
+		'default'     => 'failed'
 	),
 	'plugins_options' => array(
 		'title' => __( 'Options', 'woocommerce-pace-gateway' ),
