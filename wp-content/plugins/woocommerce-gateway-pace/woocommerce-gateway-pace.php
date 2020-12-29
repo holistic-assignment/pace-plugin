@@ -220,9 +220,9 @@ function woocommerce_gateway_pace_init()
 			private function __construct()
 			{
 				add_action('admin_init', array($this, 'install'));
-				$this->init();
 
 				$this->settings = get_option( 'woocommerce_pace_settings' );
+				$this->init();
 			}
 
 			/**
@@ -459,7 +459,6 @@ function woocommerce_gateway_pace_init()
 
 				$http_query = wp_parse_url( $cancelled_url );
 				wp_parse_str( $http_query['query'], $http_query_params );
-
 				unset( $http_query_params['_wpnonce'] );
 
 				return site_url() . $http_query['path'] . '?' . http_build_query( $http_query_params );
