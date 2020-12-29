@@ -107,4 +107,18 @@ class WC_Pace_Helper
 			return false;
 		}
 	}
+
+	/**
+	 * Filter woocommerce cancelled uri
+	 * 
+	 * @param  String $uri 
+	 * @return String      
+	 */
+	public static function do_filter_uri( $uri ) {
+		$http_query = wp_parse_url( $uri );
+		wp_parse_str( $http_query['query'], $http_query_params );
+		unset( $http_query_params['_wpnonce'] );
+
+		return site_url() . $http_query['path'] . '?' . http_build_query( $http_query_params );
+	}
 }

@@ -96,7 +96,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 			'referenceID'  => wp_kses_post( $order->get_id() ),
 			'redirectUrls' => array(
 				'success' => apply_filters( 'woocommerce_get_checkout_order_received_url', $success_url ),
-				'failed'  => esc_url_raw( $order->get_cancel_order_url_raw() )
+				'failed'  => esc_url_raw( WC_Pace_Helper::do_filter_uri( $order->get_cancel_order_url_raw() ) )
 			)
 		);
 	}

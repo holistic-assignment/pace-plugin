@@ -248,15 +248,24 @@ function woocommerce_gateway_pace_init()
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 
+				/**
+				 * Update order status based on merchant setting on dashboard
+				 * Notes: Redirect mode
+				 */
+				add_action('wp_loaded', array($this, 'woocommerce_update_order_status_when_transaction_cancelled_redirect'), 99);
+
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
+
 				do_action('check_cron_exist');
+
 				/**
-				 * Update order status based on merchanr setting on dashboard
+				 * Update order status based on merchant setting on dashboard
+				 * Notes: Popup mode
 				 * Values: cancelled | failed
 				 */
-				add_filter( 'woocommerce_pace_cancelled_order_redirect', array($this, 'woocommerce_pace_cancelled_order_redirect_hooks'), 10 ,2 );
+				add_filter( 'woocommerce_pace_cancelled_order_redirect', array($this, 'woocommerce_update_order_status_when_transaction_cancelled_popup'), 10 ,2 );
 			}
 
 			/**
@@ -443,25 +452,50 @@ function woocommerce_gateway_pace_init()
 				}
 
 				return $price;
+			}	
+
+			/**
+			 * Update order status when transaction cancelled/failed based on Merchant settings
+			 * 
+			 * @param WC_Order $order
+			 */
+			public function update_order_status_supports( $order ) {
+				$order->update_status( $this->settings['transaction_failed'], __( "Order {$this->settings['transaction_failed']} by customer.", 'woocommerce' ) );
+				wc_add_notice( 
+					apply_filters( 
+						'woocommerce_order_cancelled_notice', 
+						__( "Your order was {$this->settings['transaction_failed']}.", 'woocommerce' ) ), apply_filters( 'woocommerce_order_cancelled_notice_type', 'notice' 
+					) 
+				);
 			}
 
 			/**
-			 * Update order status based on merchant setting
+			 * Update order status when the transaction has been canceled that based on merchant setting
+			 */
+			public function woocommerce_update_order_status_when_transaction_cancelled_redirect() {
+				if ( 
+					isset( $_GET['cancel_order'] ) &&
+					isset( $_GET['order'] ) &&
+					isset( $_GET['order_id'] ) && 
+					isset( $_GET['merchantReferenceId'] )
+				) {
+					$order = wc_get_order( (int) $_GET['order_id'] );
+					$this->update_order_status_supports( $order );
+				}
+			}
+
+			/**
+			 * Update order status when the transaction has been canceled that based on merchant setting
 			 * 
 			 * @param  String 	$cancelled_url 	cancel page url
 			 * @param  WC_Order $order       
-			 * @return String 					cancel page url after filter
 			 * @since 1.0.7
+			 * @return String
 			 */
-			public function woocommerce_pace_cancelled_order_redirect_hooks( $cancelled_url, $order ) {
-				$order->update_status( $this->settings['transaction_failed'], __( "Order {$this->settings['transaction_failed']} by customer.", 'woocommerce' ) );
-				wc_add_notice( apply_filters( 'woocommerce_order_cancelled_notice', __( "Your order was {$this->settings['transaction_failed']}.", 'woocommerce' ) ), apply_filters( 'woocommerce_order_cancelled_notice_type', 'notice' ) );
+			public function woocommerce_update_order_status_when_transaction_cancelled_popup( $cancelled_url, $order ) {
+				$this->update_order_status_supports( $order );
 
-				$http_query = wp_parse_url( $cancelled_url );
-				wp_parse_str( $http_query['query'], $http_query_params );
-				unset( $http_query_params['_wpnonce'] );
-
-				return site_url() . $http_query['path'] . '?' . http_build_query( $http_query_params );
+				return WC_Pace_Helper::do_filter_uri( $cancelled_url );
 			}
 
 			/**
