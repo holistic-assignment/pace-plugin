@@ -261,7 +261,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				data-price=$total
 				data-enabled='$options[enable_checkout_widget]'
 				data-checkout-primary-color='$options[checkout_text_primary_color]'
-				data-timeline-color='$options[checkout_text_timeline_color]
+				data-timeline-color='$options[checkout_text_timeline_color]'
 				data-checkout-second-color='$options[checkout_text_second_color]'
 				data-fontsize='$options[checkout_fontsize]'
 				data-checkout-background-color='$options[checkout_background_color]'
