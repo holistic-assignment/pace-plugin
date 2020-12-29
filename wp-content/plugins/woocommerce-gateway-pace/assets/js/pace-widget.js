@@ -82,7 +82,7 @@
 						timelineColor: data.timelineColor,
 						backgroundColor: data.checkoutBackgroundColor,
 						foregroundColor: data.checkoutForegroundColor,
-						fontSize: data.fontsize
+						fontSize: (data.fontsize ? data.fontsize : 13) + 'px'
 					}
 				} );
 			}
