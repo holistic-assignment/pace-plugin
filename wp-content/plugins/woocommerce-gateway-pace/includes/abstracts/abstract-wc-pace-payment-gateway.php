@@ -82,8 +82,9 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 * @return array           API data source
 	 */
 	public function prepare_order_source( $order = null ) {
-		if ( ! $order )
-			throw new Exception( __( 'Missing the checkout\'s order.', 'woocommerce-pace-gateway' ) );
+		if ( ! $order ) {
+			throw new Exception( __( "Missing the checkout's order.", 'woocommerce-pace-gateway' ) );
+		}
 		
 		// success url
 		$success_url = wc_get_endpoint_url( 'order-received', $order->get_id(), wc_get_checkout_url() );
@@ -96,7 +97,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 			'referenceID'  => wp_kses_post( $order->get_id() ),
 			'redirectUrls' => array(
 				'success' => apply_filters( 'woocommerce_get_checkout_order_received_url', $success_url ),
-				'failed'  => esc_url_raw( WC_Pace_Helper::do_filter_uri( $order->get_cancel_order_url_raw() ) )
+				'failed'  => esc_url_raw( WC_Pace_Helper::pace_http_build_query( $order->get_cancel_order_url_raw() ) )
 			)
 		);
 	}
@@ -149,7 +150,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 		}
 
 		// clear order id
-		WC()->session->__unset( 'order_awaiting_payment' );
+		unset( WC()->session->order_awaiting_payment );
 
 		if ( is_callable( array( $order, 'save' ) ) ) {
 			$order->save();

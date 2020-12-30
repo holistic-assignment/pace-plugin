@@ -111,13 +111,20 @@ class WC_Pace_Helper
 	/**
 	 * Filter woocommerce cancelled uri
 	 * 
-	 * @param  String $uri 
+	 * @param  String 		$uri 
+	 * @param  Array | Null $params
 	 * @return String      
 	 */
-	public static function do_filter_uri( $uri ) {
+	public static function pace_http_build_query( $uri, $params = array() ) {
 		$http_query = wp_parse_url( $uri );
 		wp_parse_str( $http_query['query'], $http_query_params );
 		unset( $http_query_params['_wpnonce'] );
+
+		if ( $params ) {
+			array_walk( $params, function( $value, $key ) use ( &$http_query_params ) {
+				$http_query_params[ $key ] = $value;
+			} );
+		}
 
 		return site_url() . $http_query['path'] . '?' . http_build_query( $http_query_params );
 	}

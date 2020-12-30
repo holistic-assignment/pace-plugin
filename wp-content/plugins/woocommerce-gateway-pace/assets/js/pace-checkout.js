@@ -162,7 +162,7 @@
 					if ( -1 === redirect.indexOf( 'https://' ) || -1 === redirect.indexOf( 'http://' ) ) {
 						window.location = redirect;
 					} else {
-						window.location = decodeURI( redirect );
+						window.location = encodeURI( redirect );
 					}
 				}
 			} );

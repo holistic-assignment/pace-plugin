@@ -422,28 +422,34 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			
 			$order = wc_get_order( $order_id );
 
-			if ( ! $order ) {
-				throw new Exception( __( 'Unable to create order.', 'woocommerce' ) );
+			if ( is_wp_error( $order ) ) {
+				$localized_message = apply_filters( 
+					'woocommerce_api_cannot_create_order',
+					sprintf( 
+						__( 'Cannot create order: %s', 'woocommerce-pace-gateway' ),
+						implode( ', ', $order->get_error_messages() )
+					)
+				);
+				
+				throw new Exception( $localized_message );
 			}
 
 			// store the pre-order id for later use
 			WC()->session->set( 'order_awaiting_payment', $order_id );
 
-			// remove order transaction id if exist
-			// to make sure the transaction is not duplicate on one order
-			if($order->get_transaction_id()) {
-				self::cancel_transaction( $order );
-		   	}
-
-			// send the request to Pacenow API to create transaction
-			$transaction = $this->make_request_create_transaction( $order );
+			// check the order has Pace transaction id
+			// if not, send the request to Pacenow API to create transaction
+			$transaction = $order->get_transaction_id() 
+				? WC_Pace_API::request( array(), sprintf( 'checkouts/%s', $order->get_transaction_id() ), $method = 'GET' ) 
+				: $this->make_request_create_transaction( $order );
 
 			if ( isset( $transaction->error ) ) {
 				$localized_message = __( 
 					sprintf( 'Your transaction could not be created on Pace. Please contact our team at support@pacenow.co. %s', $transaction->correlation_id ), 
 					'woocommerce-pace-gateway' 
 				);
-				throw new Exception( __( $localized_message, 'woocommerce-pace-gateway' ) );
+
+				throw new Exception( $localized_message );
 			}
 			
 			/**
@@ -458,6 +464,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			{
 				$order_status = $transaction->status === 'cancelled' ? $this->order_status_failed : $this->order_status_expire;
 				$order->update_status( $order_status, $note = __( 'Having trouble creating a Pace transactions.', 'woocommerce-pace-gateway' ) );
+				unset( WC()->session->order_awaiting_payment );
+
 				throw new Exception( __( 'There is a problem paying with Pace. Please try checking again later or try another payment source.', 'woocommerce-pace-gateway' ) );
 			}
 

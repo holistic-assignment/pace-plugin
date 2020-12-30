@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.3
+ * Version: 1.1.4
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -247,25 +247,18 @@ function woocommerce_gateway_pace_init()
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
+				add_action('woocommerce_before_thankyou', array($this, 'pace_validate_before_success_redirect'));
 
 				/**
 				 * Update order status based on merchant setting on dashboard
-				 * Notes: Redirect mode
 				 */
-				add_action('wp_loaded', array($this, 'woocommerce_update_order_status_when_transaction_cancelled_redirect'), 99);
+				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
 
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
 
 				do_action('check_cron_exist');
-
-				/**
-				 * Update order status based on merchant setting on dashboard
-				 * Notes: Popup mode
-				 * Values: cancelled | failed
-				 */
-				add_filter( 'woocommerce_pace_cancelled_order_redirect', array($this, 'woocommerce_update_order_status_when_transaction_cancelled_popup'), 10 ,2 );
 			}
 
 			/**
@@ -399,6 +392,53 @@ function woocommerce_gateway_pace_init()
 			}
 
 			/**
+			 * Validate Pace transaction before render success page
+			 * 
+			 * @param WC_Order $order_id 
+			 * @since 1.1.4 
+			 */
+			public function pace_validate_before_success_redirect( $order_id ) {
+				$order = wc_get_order( $order_id );
+
+				if ( ! $order->get_transaction_id() && 'pace' !== $order->get_payment_method() ) {
+					return;
+				}
+
+				$_transaction = WC_Pace_API::request( 
+					array(),
+					sprintf( 'checkouts/%s', $order->get_transaction_id() ),
+					$method = 'GET'
+				);
+
+				try {
+					$statuses = '';
+
+					if ( isset( $_transaction->error ) ) {
+						$statuses = 'failed';
+
+						throw new Exception( __( 'Your order is not valid.', 'woocommerce-pace-gateway' ) );
+					}
+
+					if ( 'approved' === $_transaction->status ) {
+						$order->update_status( 'completed' );
+						return;
+					}
+
+					throw new Exception( 'order failed' );
+				} catch (Exception $e) {
+					$redirect_cancel_uri = WC_Pace_Helper::pace_http_build_query( 
+						$order->get_cancel_order_url_raw(), 
+						array(
+							'merchantReferenceId' => $order_id
+						) 
+					);
+
+					wp_safe_redirect( $redirect_cancel_uri );
+					exit();
+				}
+			}
+
+			/**
 			 * Woocommerce pace Gateway - include widgets
 			 * @param  html   $price    WC_Product::get_price_html
 			 * @param  object $instance WC_Product::instance
@@ -460,42 +500,80 @@ function woocommerce_gateway_pace_init()
 			 * @param WC_Order $order
 			 */
 			public function update_order_status_supports( $order ) {
-				$order->update_status( $this->settings['transaction_failed'], __( "Order {$this->settings['transaction_failed']} by customer.", 'woocommerce' ) );
-				wc_add_notice( 
-					apply_filters( 
-						'woocommerce_order_cancelled_notice', 
-						__( "Your order was {$this->settings['transaction_failed']}.", 'woocommerce' ) ), apply_filters( 'woocommerce_order_cancelled_notice_type', 'notice' 
-					) 
-				);
+				try {
+					// clear order session first
+					unset( WC()->session->order_awaiting_payment );
+
+					// validate Pace transaction before update order
+					$_transaction = WC_Pace_API::request( 
+						array(),
+						sprintf( 'checkouts/%s', $order->get_transaction_id() ),
+						$method = 'GET'
+					);
+
+					if ( isset( $_transaction->error ) ) {
+						throw new Exception( __( 'Your order is not valid.', 'woocommerce-pace-gateway' ) );
+					}
+
+					if ( 
+						$order->has_status( $this->settings['transaction_failed'] ) ||
+						!in_array( $_transaction->status, array( 'cancelled', 'expired' ) )
+					) {
+						throw new Exception( __( "Your order can no longer be cancelled. Please contact us if you need assistance.", 'woocommerce-pace-gateway' ) );
+					}
+
+					$statuses = '';
+					switch ( $_transaction->status ) {
+						case 'cancelled':
+							$statuses = $this->settings['transaction_failed'];
+							break;
+						case 'expired':
+							$statuses = $this->settings['transaction_expired'];
+							break;
+						default:
+							# do nothing
+							break;
+					}
+
+					$order->update_status( $statuses, __( "Order has been {$statuses} by customer.", 'woocommerce' ) );
+					wc_add_notice( 
+						apply_filters( 
+							'woocommerce_order_cancelled_notice', 
+							__( "Your order has been {$statuses}.", 'woocommerce' ), 
+						),
+						'notice'
+					);
+				} catch (Exception $e) {
+					wc_add_notice( $e->getMessage(), 'error' );
+				}
 			}
 
 			/**
 			 * Update order status when the transaction has been canceled that based on merchant setting
+			 * Note: override cancel order function
+			 * 
+			 * @since 1.1.4
 			 */
-			public function woocommerce_update_order_status_when_transaction_cancelled_redirect() {
+			public function pace_canceled_redirect_uri() {
 				if ( 
 					isset( $_GET['cancel_order'] ) &&
 					isset( $_GET['order'] ) &&
 					isset( $_GET['order_id'] ) && 
 					isset( $_GET['merchantReferenceId'] )
 				) {
-					$order = wc_get_order( (int) $_GET['order_id'] );
-					$this->update_order_status_supports( $order );
+					$order_id = (int) wp_unslash( $_GET['order_id'] ); // phpcs:ignore
+					$order = wc_get_order( $order_id );
+					$user_can_cancel = current_user_can( 'cancel_order', $order_id );
+
+					if ( ! $user_can_cancel ) {
+						wc_add_notice( 
+							__( 'You are not allowed to cancel this order', 'woocommerce-pace-gateway' ), 
+							'error' 
+						);
+					} else {
+						$this->update_order_status_supports( $order );	
+					}
 				}
-			}
-
-			/**
-			 * Update order status when the transaction has been canceled that based on merchant setting
-			 * 
-			 * @param  String 	$cancelled_url 	cancel page url
-			 * @param  WC_Order $order       
-			 * @since 1.0.7
-			 * @return String
-			 */
-			public function woocommerce_update_order_status_when_transaction_cancelled_popup( $cancelled_url, $order ) {
-				$this->update_order_status_supports( $order );
-
-				return WC_Pace_Helper::do_filter_uri( $cancelled_url );
 			}
 
 			/**

@@ -16,7 +16,7 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 
 	public function init() {
 		add_action( 'wc_ajax_wc_pace_create_transaction', array( $this, 'woocommerce_pace_create_transaction' ) );
-		add_action( 'wc_ajax_wc_pace_cancelled_order', array( $this, 'woocommerce_pace_cancelled_order' ) );
+		add_action( 'wc_ajax_wc_pace_cancelled_order', array( $this, 'woocommerce_pace_cancelled_order_popup' ) );
 	}
 
 	/**
@@ -26,10 +26,11 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 	 */
 	public function woocommerce_pace_create_transaction() {
 		try {
-			$_nonce = wc_get_var( $_POST['security'] );
+			$_nonce = wp_unslash( wc_get_var( $_POST['security'] ) ); // phpcs:ignore 
 			// check nonce
 			if ( ! wp_verify_nonce( $_nonce, '_wc_pace_nonce' ) ) {
 				wc_add_notice( __( 'We were unable to process your order, please try again.', 'woocommerce-pace-gateway' ), 'error' );
+				
 				throw new Exception( wc_print_notices( true ) );
 			}
 
@@ -63,13 +64,14 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 	}
 
 	/**
-	 * Woocommerce cancelled order
-	 * 
-	 * @return array|url
+	 * Canceled the order with Pace checkout popup mode
+	 *
+	 * @since 1.1.4
+	 * @return json
 	 */
-	public function woocommerce_pace_cancelled_order() {
+	public function woocommerce_pace_cancelled_order_popup() {
 		try {
-			$order_id = WC()->session->get( 'order_awaiting_payment' );
+			$order_id = wp_unslash( $_POST['data']['referenceID'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( ! $order_id ) {
 				throw new Exception( __( 'Cannot find order Id or transaction Id.', 'woocommerce-pace-gateway' ) );
@@ -78,7 +80,14 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 			$order = wc_get_order( $order_id );
 
 			if ( is_wp_error( $order ) ) {
-				throw new Exception( 'woocommerce_api_cannot_create_order', sprintf( __( 'Cannot create order: %s', 'woocommerce-pace-gateway' ), implode( ', ', $order->get_error_messages() ) ), 400 );
+				$localized_message = apply_filters( 
+					'woocommerce_api_cannot_create_order',
+					sprintf( 
+						__( 'Cannot create order: %s', 'woocommerce-pace-gateway' ),
+						implode( ', ', $order->get_error_messages() )
+					)
+				);
+				throw new Exception( $localized_message );
 			}
 
 			/**
@@ -93,12 +102,19 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 				throw new Exception( $localized_message );
 			}
 
-			$cancelled_url = apply_filters( 'woocommerce_pace_cancelled_order_redirect', $order->get_cancel_order_url_raw(), $order );
-
+			// add hook before creating URI cancel
 			do_action( 'woocommerce_cancelled_order', $order->get_id() );
 
-			// the order will be updated the status to canceled/failed base on the merchant's settings on the Cancel page
-			wp_send_json_success( array( 'redirect' => $cancelled_url ) );
+			$redirect_cancel_uri = WC_Pace_Helper::pace_http_build_query( 
+				$order->get_cancel_order_url_raw(), 
+				array(
+					'merchantReferenceId' => wp_unslash( $_POST['data']['referenceID'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				) 
+			);
+
+			wp_send_json_success( array( 
+				'redirect' => $redirect_cancel_uri 
+			) );
 
 		} catch ( Exception $e ) {
 			WC_Pace_Logger::log( $e->getMessage() );
