@@ -406,7 +406,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * Pacenow Gateway - create transaction
 	 * 
 	 * @param  array $posted_data  checkout's validated post data
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 * @return array|object transaction response
 	 */
 	public function woocommerce_create_transaction_before_checkout_hooks( $posted_data ) {
@@ -440,7 +440,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			// check the order has Pace transaction id
 			// if not, send the request to Pacenow API to create transaction
 			$transaction = $order->get_transaction_id() 
-				? WC_Pace_API::request( array(), sprintf( 'checkouts/%s', $order->get_transaction_id() ), $method = 'GET' ) 
+				? $this->retrieve_order_transaction( $order )
 				: $this->make_request_create_transaction( $order );
 
 			if ( isset( $transaction->error ) ) {
@@ -460,8 +460,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			 */
 			if ( 
 				isset( $transaction->status ) && 
-				( $transaction->status === 'cancelled' || $transaction->status === 'expired' ) ) 
-			{
+				( $transaction->status === 'cancelled' || $transaction->status === 'expired' ) 
+			) {
 				$order_status = $transaction->status === 'cancelled' ? $this->order_status_failed : $this->order_status_expire;
 				$order->update_status( $order_status, $note = __( 'Having trouble creating a Pace transactions.', 'woocommerce-pace-gateway' ) );
 				unset( WC()->session->order_awaiting_payment );
@@ -470,6 +470,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			}
 
 			$order->set_transaction_id( $transaction->transactionID );
+			$order->add_meta_data( 'pace_transaction', json_encode( $transaction ), $unique = true );
 			$order->save();
 			
 			wp_send_json_success( $transaction );

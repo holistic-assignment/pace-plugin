@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.4
+ * Version: 1.1.5
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -248,17 +248,26 @@ function woocommerce_gateway_pace_init()
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
 				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 				add_action('woocommerce_before_thankyou', array($this, 'pace_validate_before_success_redirect'));
-
-				/**
-				 * Update order status based on merchant setting on dashboard
-				 */
-				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
+				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99); /* update order status based on merchant setting on dashboard */
 
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename( __FILE__ ), array($this, 'plugin_action_links'));
+				add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
 
 				do_action('check_cron_exist');
+			}
+
+			/**
+			 * Unset pre order when updated cart
+			 * 
+			 * @param Boolean $is_updated 
+			 * @since 1.1.5
+			 */
+			public function pace_unset_order_session_when_updated_cart( $is_updated ) {
+				if ( $is_updated ) {
+					unset( WC()->session->order_awaiting_payment );
+				}
 			}
 
 			/**
