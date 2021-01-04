@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.5
+ * Version: 1.1.6
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -265,7 +265,7 @@ function woocommerce_gateway_pace_init()
 			 * Unset pre order when updated cart
 			 * 
 			 * @param Boolean $is_updated 
-			 * @since 1.1.5
+			 * @since 1.1.6
 			 */
 			public function pace_unset_order_session_when_updated_cart($is_updated)
 			{
