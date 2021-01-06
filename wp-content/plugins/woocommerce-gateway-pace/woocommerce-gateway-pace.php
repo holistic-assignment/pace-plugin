@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.6
+ * Version: 1.1.5
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -425,8 +425,10 @@ function woocommerce_gateway_pace_init()
 			 * @return Array
 			 */
 			public function manager_post_data_before_manually_order_update( $post, $postarr ) {
+				global $pagenow;
+
 				// ensure modify Order with Pace payment methods
-				if ( 'shop_order' === $post['post_type'] ) {
+				if ( 'shop_order' === $post['post_type'] && is_admin() && 'post.php' === $pagenow ) {
 					$order = wc_get_order( $postarr['ID'] );
 
 					if ( ! is_wp_error( $order ) ) {
@@ -479,12 +481,9 @@ function woocommerce_gateway_pace_init()
 						throw new Exception(__('Your order is not valid.', 'woocommerce-pace-gateway'));
 					}
 
-					if ('approved' === $_transaction->status) {
-						$order->update_status('completed');
-						return;
+					if ('approved' !== $_transaction->status) {
+						throw new Exception(__( 'Your order was failed.', 'woocommerce-pace-gateway' ));
 					}
-
-					throw new Exception('order failed');
 				} catch (Exception $e) {
 					$redirect_cancel_uri = WC_Pace_Helper::pace_http_build_query(
 						$order->get_cancel_order_url_raw(),

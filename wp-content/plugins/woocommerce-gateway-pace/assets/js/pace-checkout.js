@@ -32,6 +32,7 @@
 		 * @return {array}
 		 */
 		create_transaction: function() {
+			console.log( 'abc' );
 			// prepare data from the checkout form
 			var ajax_data = [],
 				method = 'post',
@@ -202,6 +203,7 @@
 		},
 
 		unBlock: function() {
+			$('#place_order').prop('disabled', false);
 			wc_pace_gateway.form && wc_pace_gateway.form.unblock();
 		},
 
@@ -214,7 +216,6 @@
 			var message = res.data ? res.data.message : res.messages;
 
 			if ( message ) {
-
 				var	error_element = $( '<div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout"></div>' ).html( $( message ).addClass( 'woocommerce-error wc-pace-error' ) );
 				$( '.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message' ).remove();
 				wc_pace_gateway.form.prepend( error_element ); // eslint-disable-line max-len

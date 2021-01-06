@@ -177,9 +177,9 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$currency = WC_Pace_Helper::get_currency_by_country( $country );
 		
 		if ( 
-			'yes' == $this->enabled and 
-			! empty( $this->client_id ) and 
-			! empty( $this->client_secret ) and 
+			'yes' == $this->enabled && 
+			!empty( $this->client_id ) &&
+			!empty( $this->client_secret ) &&
 			WC_Pace_Helper::is_block( $currency )
 		) {
 			return true;
@@ -366,11 +366,6 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 			$this->process_response($transaction, $order);
 
-			// make cart is empty
-			if (isset(WC()->cart)) {
-				WC()->cart->empty_cart();
-			}
-
 			// unlock the process
 			$lock->unlock();
 
@@ -509,10 +504,10 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			return;
 		}
 
-		if ( 'redirect' === $this->checkout_mode and 'pending' === $order->get_status() ) {
+		if ( 'redirect' === $this->checkout_mode && 'pending' === $order->get_status() ) {
 			// process order after rediect payment
 			$transaction = array(
-				'status' => 'success',
+				'status' => 'approved',
 				'transactionId' => '' /* already set transaction ID */
 			);
 

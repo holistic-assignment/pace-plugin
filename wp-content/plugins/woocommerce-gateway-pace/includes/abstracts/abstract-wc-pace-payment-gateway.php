@@ -110,12 +110,11 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 */
 	public function process_response( $transaction, $order ) {
 		$order_id = $order->get_id();
-
-		if ( ! isset( $transaction['status'] ) ) {
-			throw new Exception( __( 'Unknow transaction source status.', 'woocommerce-pace-gateway' ) );
-		}
-
 		$transaction_id = empty( $transaction['transactionId'] ) ? $order->get_transaction_id() : $transaction['transactionId'];
+
+		if ( ! $transaction_id ) {
+			throw new Exception( __( 'Unknow Pace transaction status.', 'woocommerce-pace-gateway' ) );
+		}
 
 		/**
 		 * Update the order status based on Pace transaction status
@@ -131,7 +130,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 					wc_reduce_stock_levels( $order_id );
 				}
 
-				$order->update_status( 'on-hold', sprintf( __( "Pace's transaction awaiting payment: %s.", 'woocommerce-pace-gateway' ), $transaction_id ) );
+				$order->update_status( 'pending', sprintf( __( "Pace transaction awaiting payment: %s.", 'woocommerce-pace-gateway' ), $transaction_id ) );
 				break;
 			case 'approved':
 				$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction_id );
@@ -151,6 +150,11 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 
 		// clear order id
 		unset( WC()->session->order_awaiting_payment );
+
+		// clear cart items
+		if (isset(WC()->cart)) {
+			WC()->cart->empty_cart();
+		}
 
 		if ( is_callable( array( $order, 'save' ) ) ) {
 			$order->save();
