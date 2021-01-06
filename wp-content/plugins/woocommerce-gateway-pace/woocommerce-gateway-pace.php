@@ -184,6 +184,11 @@ function woocommerce_gateway_pace_init()
 			private static $instance;
 
 			/**
+			 * @var string
+			 */
+			private $error_message;
+
+			/**
 			 * Returns the *Singleton* instance of this class.
 			 *
 			 * @return Singleton The *Singleton* instance.
@@ -228,6 +233,36 @@ function woocommerce_gateway_pace_init()
 				$this->init();
 			}
 
+
+			private function get_pace_transaction_status( $txn ) {
+				$transaction = WC_Pace_API::request([], 'checkouts/' . $txn, 'GET');
+
+				if (isset($transaction->error)) {
+					return '';
+				}
+
+				// convert from Pace transaction status to Woo order status
+				switch ($transaction->status) {
+					case 'pending_confirmation':
+						$transfer_status = 'pending';
+						break;
+					case 'cancelled':
+						$transfer_status = $this->settings['transaction_failed']; /* based on merchant's setting */
+						break;
+					case 'expired':
+						$transfer_status = $this->settings['transaction_expired'];/* based on merchant's setting */
+						break;
+					case 'approved':
+						$transfer_status = 'completed';
+						break;
+					default:
+						$transfer_status = '';
+						break;
+				}
+
+				return $transfer_status;
+			}
+
 			/**
 			 * Init the plugin after plugins_loaded so environment variables are set.
 			 *
@@ -247,9 +282,9 @@ function woocommerce_gateway_pace_init()
 				if (!$this->is_block())
 					return; /* block the plugin when the currency is not allows */
 
+				add_action('admin_notices', array( $this, 'pace_show_admin_notices' ) );
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
-				add_action('woocommerce_order_status_changed', array($this, 'cancel_payment'), 10, 4);
 				add_action('woocommerce_before_thankyou', array($this, 'pace_validate_before_success_redirect'));
 				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99); /* update order status based on merchant setting on dashboard */
 
@@ -257,8 +292,29 @@ function woocommerce_gateway_pace_init()
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
 				add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
+				add_filter('wp_insert_post_data', array($this, 'manager_post_data_before_manually_order_update'), 99, 2);
 
 				do_action('check_cron_exist');
+			}
+
+			public function pace_show_admin_notices() {
+				$error = get_option('pace_error_notices');
+
+				if ( $error ) {
+					printf('
+						<div class="notice notice-error is-dismissible"> 
+							<p>%s</p>
+							<button type="button" class="notice-dismiss">
+								<span class="screen-reader-text">Dismiss this notice.</span>
+							</button>
+						</div>
+					',
+					$error
+					);
+
+					// reset pace errors message
+					delete_option( 'pace_error_notices' );
+				}
 			}
 
 			/**
@@ -363,50 +419,35 @@ function woocommerce_gateway_pace_init()
 			}
 
 			/**
-			 * Handle cancel Pace transaction in dashboard
+			 * Validated Pace transaction before manually update order
 			 * 
-			 * @param int 		$order_id  		WC_Order::id
-			 * @param string 	$from old order status
-			 * @param string 	$to new order 	status
-			 * @param WC_Order 	$instance 		WC_Order:instance
-			 * 
-			 * @since 1.0.1
-			 * @version 1.0.0
+			 * @param  Array $post    
+			 * @return Array
 			 */
-			public function cancel_payment($order_id, $from, $to, $instance)
-			{
-				try {
-					$order = wc_get_order($order_id);
+			public function manager_post_data_before_manually_order_update( $post, $postarr ) {
+				// ensure modify Order with Pace payment methods
+				if ( 'shop_order' === $post['post_type'] ) {
+					$order = wc_get_order( $postarr['ID'] );
 
-					if (is_wp_error($order)) {
-						throw new Exception(__($order->get_error_messages(), 'woocommerce-pace-gateway'));
-					}
+					if ( ! is_wp_error( $order ) ) {
 
-					if ('cancelled' === $to and 'pace' === $order->get_payment_method()) {
-						// cancelled Pace transaction
-						$response = WC_Pace_Gateway_Payment::cancel_transaction($order);
+						if ( 'pace' === $order->get_payment_method() ) {
+							$current_status = $order->get_status();
 
-						if (isset($response->error)) {
-							$localized_message = __("There is a problem canceling the order. {$response->error->message}", 'woocommerce-pace-gateway');
+							// get Pace transaction status
+							$pace_status = $this->get_pace_transaction_status( wp_unslash( $postarr['_transaction_id'] ) );
 
-							add_filter('woocommerce_order_cancelled_notice', function () use ($localized_message) {
-								return $localized_message;
-							});
-
-							throw new Exception($localized_message);
+							if ( wc_clean( wp_unslash( $postarr['order_status'] ) ) != $pace_status ) {
+								$_POST['order_status'] = $current_status;
+								// store errors message to display as notices
+								$message = __( sprintf( "Pace: Cannot update order status to %s.", wc_get_order_status_name( wp_unslash( $postarr['order_status'] ) ) ), 'woocommerce-pace-gateway' );
+								add_option( 'pace_error_notices', $message, $auto_load = 'no' );
+							}
 						}
-
-						// do nothing
 					}
-				} catch (Exception $e) {
-					WC_Pace_Logger::log('Error: ' . $e->getMessage());
-
-					$order->add_order_note($e->getMessage());
-
-					// back to the previous status
-					$order->set_status(wc_clean($from), '', true);
-					$order->save();
 				}
+
+				return $post;
 			}
 
 			/**
