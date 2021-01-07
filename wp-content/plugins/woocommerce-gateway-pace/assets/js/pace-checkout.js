@@ -32,7 +32,6 @@
 		 * @return {array}
 		 */
 		create_transaction: function() {
-			console.log( 'abc' );
 			// prepare data from the checkout form
 			var ajax_data = [],
 				method = 'post',
