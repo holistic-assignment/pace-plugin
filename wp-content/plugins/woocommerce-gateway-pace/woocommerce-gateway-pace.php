@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.5
+ * Version: 1.1.5-rc01
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.0.0');
+define('WC_PACE_GATEWAY_VERSION', '1.1.5-rc01');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -596,13 +596,7 @@ function woocommerce_gateway_pace_init()
 					}
 
 					$order->update_status($statuses, __("Order has been {$statuses} by customer.", 'woocommerce'));
-					wc_add_notice(
-						apply_filters(
-							'woocommerce_order_cancelled_notice',
-							__("Your order has been {$statuses}.", 'woocommerce'),
-						),
-						'notice'
-					);
+					wc_add_notice( apply_filters( 'woocommerce_order_cancelled_notice', __("Your order has been {$statuses}.", 'woocommerce') ), 'notice');
 				} catch (Exception $e) {
 					wc_add_notice($e->getMessage(), 'error');
 				}
