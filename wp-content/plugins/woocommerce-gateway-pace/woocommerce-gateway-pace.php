@@ -585,10 +585,10 @@ function woocommerce_gateway_pace_init()
 					$statuses = '';
 					switch ($_transaction->status) {
 						case 'cancelled':
-							$statuses = $this->settings['transaction_failed'];
+							$statuses = $this->settings['transaction_failed'] ? $this->settings['transaction_failed'] : "cancelled";
 							break;
 						case 'expired':
-							$statuses = $this->settings['transaction_expired'];
+							$statuses = $this->settings['transaction_expired'] ? $this->settings['transaction_expired'] : "failed";
 							break;
 						default:
 							# do nothing
