@@ -170,7 +170,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 * 		
 	 * @param  WC_Order $order
 	 * @return Array|Json
-	 * @since 1.1.6
+	 * @since 1.1.6-rc-01
 	 */
 	public function retrieve_order_transaction( $order ) {
 		return json_decode( $order->get_meta( 'pace_transaction' ) );
