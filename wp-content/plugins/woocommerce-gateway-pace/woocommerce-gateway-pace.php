@@ -64,8 +64,8 @@ add_action('plugins_loaded', 'woocommerce_gateway_pace_init');
 function compare_transaction()
 {
 	$params = [
-		"from" =>  date("yy-m-01", strtotime("-1 months")),
-		"to"	=> date('yy-m-d')
+		"from" =>  date('Y-m-d', strtotime("-1 weeks")),
+		"to"	=> date('Y-m-d')
 	];
 	$pace_settings = get_option('woocommerce_pace_settings');
 	$fail_status = !!$pace_settings['transaction_failed'] ? "wc-" . $pace_settings['transaction_failed'] : "wc-cancelled";
@@ -106,9 +106,7 @@ function compare_transaction()
 							break;
 						case 'approved':
 						
-								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()  . "wc-approved");
-								$order->set_status("wc-completed");
-								$order->save();
+							$order->payment_complete();
 							
 							break;
 
