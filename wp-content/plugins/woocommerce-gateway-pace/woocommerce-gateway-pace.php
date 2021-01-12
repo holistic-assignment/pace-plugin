@@ -462,15 +462,11 @@ function woocommerce_gateway_pace_init()
 			{
 				$order = wc_get_order($order_id);
 
-				if (!$order->get_transaction_id() && 'pace' !== $order->get_payment_method()) {
+				if ( 'pace' != $order->get_payment_method() ) {
 					return;
 				}
 
-				$_transaction = WC_Pace_API::request(
-					array(),
-					sprintf('checkouts/%s', $order->get_transaction_id()),
-					$method = 'GET'
-				);
+				$_transaction = WC_Pace_API::request(array(), sprintf('checkouts/%s', $order->get_transaction_id()), $method = 'GET');
 
 				try {
 					$statuses = '';
@@ -565,12 +561,8 @@ function woocommerce_gateway_pace_init()
 					unset(WC()->session->order_awaiting_payment);
 
 					// validate Pace transaction before update order
-					$_transaction = WC_Pace_API::request(
-						array(),
-						sprintf('checkouts/%s', $order->get_transaction_id()),
-						$method = 'GET'
-					);
-
+					$_transaction = WC_Pace_API::request(array(), sprintf('checkouts/%s', $order->get_transaction_id()), $method = 'GET');
+					
 					if (isset($_transaction->error)) {
 						throw new Exception(__('Your order is not valid.', 'woocommerce-pace-gateway'));
 					}
