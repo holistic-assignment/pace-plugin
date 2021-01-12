@@ -342,6 +342,10 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		try {
 			$order = wc_get_order($order_id);
 
+			if ( is_wp_error( $order ) ) {
+				throw new Exception( $order->get_error_messages(), 404 );
+			}
+
 			// lock the process until the checkout is completed
 			$lock = new WC_Pace_Locked();
 
@@ -358,7 +362,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$transaction = isset($_POST['pace_transaction']) ? stripslashes_deep($_POST['pace_transaction']) : null;
 
 			if (is_null($transaction)) {
-				throw new Exception(__('Missing the transaction source, please create a transaction first.', 'woocommerce-pace-gateway'));
+				throw new Exception(__('Missing the transaction source, please create a transaction first.', 'woocommerce-pace-gateway'), 404);
 			}
 
 			// convert transaction to array
@@ -375,12 +379,14 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				'transaction' => $transaction
 			);
 		} catch (Exception $e) {
-			wc_add_notice($e->getMessage(), 'error');
 			WC_Pace_Logger::log('Error: ' . $e->getMessage());
 
+			wc_add_notice($e->getMessage(), 'error');
 			do_action('wc_gateway_pace_process_payment_error', $e, $order);
-			/* translators: error message */
-			$order->update_status('failed');
+			
+			if ( 404 == $e->getCode() ) {
+				$order->update_status('failed', $e->getMessage());
+			}
 
 			return array(
 				'result'   => 'fail',
@@ -498,20 +504,24 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 * @since 1.0.0
 	 */
 	public function pace_redirect_payment_update_order_status( $order_id ) {
-		$order = wc_get_order( $order_id );
+		try {
+			$order = wc_get_order( $order_id );
 
-		if ( is_wp_error( $order ) ) {
-			return;
-		}
+			if ( is_wp_error( $order ) ) {
+				throw new Exception( $orer->get_error_messages() );
+			}
 
-		if ( 'redirect' === $this->checkout_mode && 'pending' === $order->get_status() ) {
-			// process order after rediect payment
-			$transaction = array(
-				'status' => 'approved',
-				'transactionId' => '' /* already set transaction ID */
-			);
+			if ( 'redirect' === $this->checkout_mode && 'pending' === $order->get_status() ) {
+				// process order after rediect payment
+				$transaction = array(
+					'status' => 'approved',
+					'transactionId' => '' /* already set transaction ID */
+				);
 
-			$this->process_response( $transaction, $order );
+				$this->process_response( $transaction, $order );
+			}
+		} catch (Exception $e) {
+			WC_Pace_Logger::log( $e->getMessage() );
 		}
 	}
 }

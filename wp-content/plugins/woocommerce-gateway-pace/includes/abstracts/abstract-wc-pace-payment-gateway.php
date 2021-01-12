@@ -138,10 +138,17 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 				$order->add_order_note( $message );
 				break;
 			case 'cancelled':
+				$pace = WC_PACE_GATEWAY::get_instance();
+				$status = $pace->get_status_when_transaction_cancelled();
+				$error_message = __("Order has been {$status} by customer.", 'woocommerce');
+				$order->update_status( $status, $error_message );
+				throw new Exception( $error_message );
 			case 'expired':
-				$localized_message = __( "The transaction has {$transaction['status']}. Please try your payment again or contact the admin.", 'woocommerce-pace-gateway' );
-				$order->add_order_note( $localized_message );
-				throw new Exception( $localized_message );
+				$pace = WC_PACE_GATEWAY::get_instance();
+				$status = $pace->get_status_when_transaction_expired();
+				$error_message = __( "The transaction has {$status}. Please try your payment again or contact the admin.", 'woocommerce-pace-gateway' );
+				$order->update_status( $status, $error_message );
+				throw new Exception( $error_message );
 				break;
 			default:
 				# code...
@@ -161,8 +168,6 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 		}
 
 		do_action( 'woocommerce_pace_after_process_response', $transaction, $order );
-
-		return $transaction;
 	}
 
 	/**

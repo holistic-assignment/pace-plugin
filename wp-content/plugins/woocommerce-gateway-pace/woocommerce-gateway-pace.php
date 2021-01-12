@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.7-rc02
+ * Version: 1.1.7
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.1.7-rc02');
+define('WC_PACE_GATEWAY_VERSION', '1.1.7');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -247,13 +247,13 @@ function woocommerce_gateway_pace_init()
 						$transfer_status = 'pending';
 						break;
 					case 'cancelled':
-						$transfer_status = $this->settings['transaction_failed']; /* based on merchant's setting */
+						$transfer_status = $this->get_status_when_transaction_cancelled();
 						break;
 					case 'expired':
-						$transfer_status = $this->settings['transaction_expired'];/* based on merchant's setting */
+						$transfer_status = $this->get_status_when_transaction_expired();
 						break;
 					case 'approved':
-						$transfer_status = 'completed';
+						$transfer_status = array( 'completed', 'processing' );
 						break;
 					default:
 						$transfer_status = '';
@@ -297,6 +297,14 @@ function woocommerce_gateway_pace_init()
 				add_filter('wp_insert_post_data', array($this, 'manager_post_data_before_manually_order_update'), 99, 2);
 
 				do_action('check_cron_exist');
+			}
+
+			public function get_status_when_transaction_cancelled() {
+				return $this->settings['transaction_failed'] ? $this->settings['transaction_failed'] : 'cancelled';
+			}
+
+			public function get_status_when_transaction_expired() {
+				return $this->settings['transaction_expired'] ? $this->settings['transaction_expired'] : 'failed';
 			}
 
 			public function pace_show_admin_notices() {
@@ -440,8 +448,16 @@ function woocommerce_gateway_pace_init()
 
 							// get Pace transaction status
 							$pace_status = $this->get_pace_transaction_status( wp_unslash( $postarr['_transaction_id'] ) );
+							$new_status = wc_clean( wp_unslash( str_replace( 'wc-', '', $postarr['order_status'] ) ) );
+							$is_updated = false;
 
-							if ( wc_clean( wp_unslash( $postarr['order_status'] ) ) != $pace_status ) {
+							if ( is_array( $pace_status ) ) {
+								$is_updated = in_array( $new_status, $pace_status );
+							} else {
+								$is_updated = $new_status == $pace_status;
+							}
+
+							if ( !$is_updated ) {
 								$_POST['order_status'] = $current_status;
 								// store errors message to display as notices
 								$message = __( sprintf( "Pace: Cannot update order status to %s.", wc_get_order_status_name( wp_unslash( $postarr['order_status'] ) ) ), 'woocommerce-pace-gateway' );
@@ -455,7 +471,7 @@ function woocommerce_gateway_pace_init()
 			}
 
 			/**
-			 * Validate Pace transaction before render success page
+			 * Validate Pace transaction before display success page
 			 * 
 			 * @param WC_Order $order_id 
 			 * @since 1.1.4 
@@ -468,14 +484,11 @@ function woocommerce_gateway_pace_init()
 					return;
 				}
 
+				// ensure the Pace transaction must be 100% completed
 				$_transaction = WC_Pace_API::request(array(), sprintf('checkouts/%s', $order->get_transaction_id()), $method = 'GET');
 
 				try {
-					$statuses = '';
-
 					if (isset($_transaction->error)) {
-						$statuses = 'failed';
-
 						throw new Exception(__('Your order is not valid.', 'woocommerce-pace-gateway'));
 					}
 
@@ -564,6 +577,7 @@ function woocommerce_gateway_pace_init()
 
 					// validate Pace transaction before update order
 					$_transaction = WC_Pace_API::request(array(), sprintf('checkouts/%s', $order->get_transaction_id()), $method = 'GET');
+
 					if (isset($_transaction->error)) {
 						throw new Exception(__('Your order is not valid.', 'woocommerce-pace-gateway'));
 					}
@@ -578,10 +592,10 @@ function woocommerce_gateway_pace_init()
 					$statuses = '';
 					switch ($_transaction->status) {
 						case 'cancelled':
-							$statuses = $this->settings['transaction_failed'] ? $this->settings['transaction_failed'] : "cancelled";
+							$statuses = $this->get_status_when_transaction_cancelled();
 							break;
 						case 'expired':
-							$statuses = $this->settings['transaction_expired'] ? $this->settings['transaction_expired'] : "failed";
+							$statuses = $this->get_status_when_transaction_expired();
 							break;
 						default:
 							# do nothing
