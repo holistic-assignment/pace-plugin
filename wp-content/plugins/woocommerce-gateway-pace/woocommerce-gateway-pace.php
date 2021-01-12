@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.7-rc01
+ * Version: 1.1.7-rc02
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.1.7-rc01');
+define('WC_PACE_GATEWAY_VERSION', '1.1.7-rc02');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -88,6 +88,7 @@ function compare_transaction()
 			$order = wc_get_order($value->referenceID);
 			if ($order) {
 				if ($order->get_payment_method() == "pace") {
+					if ($order->get_status() != "completed" && $order->get_status() != "processing") {
 					switch ($value->status) {
 						case 'cancelled':
 							if ($order->get_status() != $fail_status) {
@@ -104,11 +105,11 @@ function compare_transaction()
 							}
 							break;
 						case 'approved':
-							if ($order->get_status() != "completed") {
+						
 								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()  . "wc-approved");
 								$order->set_status("wc-completed");
 								$order->save();
-							}
+							
 							break;
 
 						case 'expired':
@@ -119,6 +120,7 @@ function compare_transaction()
 							}
 							break;
 					}
+				}
 				}
 			}
 		}
@@ -323,7 +325,7 @@ function woocommerce_gateway_pace_init()
 			 * Unset pre order when updated cart
 			 * 
 			 * @param Boolean $is_updated 
-			 * @since 1.1.6
+			 * @since 1.1.7-rc02
 			 */
 			public function pace_unset_order_session_when_updated_cart($is_updated)
 			{
