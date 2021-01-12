@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.6
+ * Version: 1.1.7-rc01
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.1.6');
+define('WC_PACE_GATEWAY_VERSION', '1.1.7-rc01');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -285,7 +285,9 @@ function woocommerce_gateway_pace_init()
 				add_action('admin_notices', array( $this, 'pace_show_admin_notices' ) );
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script')); /* make sure pace's SDK is load early */
+
 				add_action('woocommerce_before_thankyou', array($this, 'pace_validate_before_success_redirect'));
+
 				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99); /* update order status based on merchant setting on dashboard */
 
 				add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
@@ -562,7 +564,6 @@ function woocommerce_gateway_pace_init()
 
 					// validate Pace transaction before update order
 					$_transaction = WC_Pace_API::request(array(), sprintf('checkouts/%s', $order->get_transaction_id()), $method = 'GET');
-					
 					if (isset($_transaction->error)) {
 						throw new Exception(__('Your order is not valid.', 'woocommerce-pace-gateway'));
 					}
