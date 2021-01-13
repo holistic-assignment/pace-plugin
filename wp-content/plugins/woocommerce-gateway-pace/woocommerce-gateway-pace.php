@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.7
+ * Version: 1.1.8-rc01
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.1.7');
+define('WC_PACE_GATEWAY_VERSION', '1.1.8-rc01');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -131,23 +131,14 @@ function handle_add_cron()
 {
 	$pace_settings = get_option('woocommerce_pace_settings');
 	$time =  isset($pace_settings['interval_cron']) && is_numeric($pace_settings['interval_cron']) ? (int) $pace_settings['interval_cron'] : 300;
-	if (!check_hook_cron_exist(["hook_compare_transaction", "complete", "failed"])) {
-		as_schedule_single_action(time() + $time, 'hook_compare_transaction');
+	if (function_exists('wp_next_scheduled') &&  function_exists('wp_schedule_single_event')) {
+		if (!wp_next_scheduled('hook_compare_transaction')) {
+			wp_schedule_single_event(time() + $time, 'hook_compare_transaction');
+		}
 	}
 }
 
-function check_hook_cron_exist($args)
-{
-	global $wpdb;
-	$query = "SELECT a.action_id FROM wp_actionscheduler_actions a";
-	$query  .= " WHERE a.hook=%s";
 
-	$query  .= " AND a.status<> %s and a.status <> %s   order by action_id desc LIMIT 1";
-	$query = $wpdb->prepare($query, $args);
-
-	$id = $wpdb->get_var($query);
-	return $id;
-}
 
 // add the filter 
 
@@ -331,7 +322,7 @@ function woocommerce_gateway_pace_init()
 			 * Unset pre order when updated cart
 			 * 
 			 * @param Boolean $is_updated 
-			 * @since 1.1.7-rc02
+			 * @since 1.1.8-rc01
 			 */
 			public function pace_unset_order_session_when_updated_cart($is_updated)
 			{
