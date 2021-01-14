@@ -39,6 +39,10 @@ class WC_Pace_Cron
      */
     static function check_order_manually_update($order_id)
     {
+        $order = wc_get_order($order_id);
+        if ($order->get_status() == "pending") {
+            return true;
+        }
         $notes = wc_get_order_notes(['order_id' => $order_id]) ? wc_get_order_notes(['order_id' => $order_id]) : [];
         foreach ($notes as $note) {
             if ($note->added_by != 'system') {
