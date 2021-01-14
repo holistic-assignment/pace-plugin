@@ -61,83 +61,6 @@ function woocommerce_pace_gateway_wc_not_supported()
 add_action('plugins_loaded', 'woocommerce_gateway_pace_init');
 
 
-function compare_transaction()
-{
-	$params = [
-		"from" =>  date('Y-m-d', strtotime("-1 weeks")),
-		"to"	=> date('Y-m-d')
-	];
-	$pace_settings = get_option('woocommerce_pace_settings');
-	$fail_status = !!$pace_settings['transaction_failed'] ? "wc-" . $pace_settings['transaction_failed'] : "wc-cancelled";
-	$expired_status = !!$pace_settings['transaction_expired'] ? "wc-" . $pace_settings['transaction_expired'] : "wc-failied";
-	$list_transaction = WC_Pace_API::request($params, "checkouts/list");
-	if ($list_transaction->items) {
-		// remove duplicate order
-		$orders = [];
-		foreach($list_transaction->items as $key => $transaction ) {
-			//sort transaction asc
-			usort($transaction , function($a , $b) {
-				return filter_var($a->transactionID, FILTER_SANITIZE_NUMBER_INT)  -  filter_var($b->transactionID, FILTER_SANITIZE_NUMBER_INT) > 0;
-			});
-			foreach($transaction  as $value) {
-				$orders[$value->referenceID] = $value;
-			}
-		}
-
-		foreach ($orders as $key => $value) {
-			$order = wc_get_order($value->referenceID);
-			if ($order) {
-				if ($order->get_payment_method() == "pace") {
-					if ($order->get_status() != "completed" && $order->get_status() != "processing") {
-					switch ($value->status) {
-						case 'cancelled':
-							if ($order->get_status() != $fail_status) {
-								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " $fail_status");
-								$order->set_status($fail_status);
-								$order->save();
-							}
-							break;
-						case 'pending_confirmation':
-							if ($order->get_status() != "pending") {
-								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-pending");
-								$order->set_status("wc-pending");
-								$order->save();
-							}
-							break;
-						case 'approved':
-						
-							$order->payment_complete();
-							
-							break;
-
-						case 'expired':
-							if ($order->get_status() != $expired_status) {
-								WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "$expired_status");
-								$order->set_status($expired_status);
-								$order->save();
-							}
-							break;
-					}
-				}
-				}
-			}
-		}
-	}
-}
-
-add_action('hook_compare_transaction', 'compare_transaction');
-add_action('check_cron_exist', 'handle_add_cron');
-function handle_add_cron()
-{
-	$pace_settings = get_option('woocommerce_pace_settings');
-	$time =  isset($pace_settings['interval_cron']) && is_numeric($pace_settings['interval_cron']) ? (int) $pace_settings['interval_cron'] : 300;
-	if (function_exists('wp_next_scheduled') &&  function_exists('wp_schedule_single_event')) {
-		if (!wp_next_scheduled('hook_compare_transaction')) {
-			wp_schedule_single_event(time() + $time, 'hook_compare_transaction');
-		}
-	}
-}
-
 
 
 // add the filter 
@@ -239,7 +162,7 @@ function woocommerce_gateway_pace_init()
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-locked.php';
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-gateway.php';
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-request.php'; /* handle payment request */
-
+				require_once dirname(__FILE__) . '/includes/class-wc-pace-cron.php';
 				if (!$this->is_block())
 					return; /* block the plugin when the currency is not allows */
 
@@ -255,8 +178,8 @@ function woocommerce_gateway_pace_init()
 				add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
 				add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
 				add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
-
-				do_action('check_cron_exist');
+			
+				WC_Pace_Cron::setup();
 			}
 
 			public function get_status_when_transaction_cancelled() {
