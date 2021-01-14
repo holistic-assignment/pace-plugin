@@ -70,8 +70,9 @@ class WC_Pace_Helper
 	 */
 	public static function is_block( $currency = '' ) {
 		try {
+			// only applies on fronts page
 			if ( is_admin() ) {
-				return true; /* only pages on front */
+				return true;
 			}
 
 			$plans = self::get_merchant_plan();
@@ -79,7 +80,7 @@ class WC_Pace_Helper
 			$currency = empty( $currency ) ? get_woocommerce_currency() : $currency;
 			
 			if ( $currency !== $plans->currencyCode ) {
-				$localized_message = sprintf( '%s (%s).', __( 'Currently, Pace do not support your currency', 'woocommerce-pace-gateway' ), $currency );
+				$localized_message = sprintf( '%s (%s).', __( 'Currently, Pace do not support your currency.', 'woocommerce-pace-gateway' ), $currency );
 				
 				throw new Exception( $localized_message );
 			}

@@ -377,15 +377,8 @@ function woocommerce_gateway_pace_init()
 					// clear order session first
 					WC()->session->set( 'order_awaiting_payment', false );
 
-					// retrieve Pace transaction from transient
-					// if the transient is empty, send an API request
-					$getTransaction = get_transient( esc_attr( 'pace_transaction_before_success_redirect' ) );
-
-					if ( ! $getTransaction ) {
-						$getTransaction = WC_Pace_API::request(array(), 'checkouts/' . $order->get_transaction_id(), $method = 'GET');
-					} else {
-						delete_transient( esc_attr( 'pace_transaction_before_success_redirect' ) );
-					}
+					// retrieve Pace transaction
+					$getTransaction = WC_Pace_API::request(array(), 'checkouts/' . $order->get_transaction_id(), $method = 'GET');
 					
 					if (isset($getTransaction->error)) {
 						throw new Exception(__('Pace transaction cannot be retrieved, therefore your order is invalid.' . $getTransaction->correlation_id, 'woocommerce-pace-gateway'));
