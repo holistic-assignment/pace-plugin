@@ -108,7 +108,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 * @param  Array 	$transaction Pacenow API response
 	 * @param  WC_Order $order       Checkout's order
 	 */
-	public function process_response( $transaction, $order ) {
+	public function process_response( $transaction, $order, $isIgnore = false ) {
 		$order_id = $order->get_id();
 		$transaction_id = empty( $transaction['transactionId'] ) ? $order->get_transaction_id() : $transaction['transactionId'];
 
@@ -122,38 +122,41 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 		 * 
 		 * @since 1.0.5
 		 */
-		switch ( $transaction['status'] ) {
-			case 'pending_confirmation':
-				$order_stock_reduced = $order->get_meta( '_order_stock_reduced', true );
+		if ( $isIgnore ) {
+			switch ( $transaction['status'] ) {
+				case 'pending_confirmation':
+					$order_stock_reduced = $order->get_meta( '_order_stock_reduced', true );
 
-				if ( ! $order_stock_reduced ) {
-					wc_reduce_stock_levels( $order_id );
-				}
+					if ( ! $order_stock_reduced ) {
+						wc_reduce_stock_levels( $order_id );
+					}
 
-				$order->update_status( 'pending', sprintf( __( "Pace transaction awaiting payment: %s.", 'woocommerce-pace-gateway' ), $transaction_id ) );
-				break;
-			case 'approved':
-				$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction_id );
-				$order->payment_complete();
-				$order->add_order_note( $message );
-				break;
-			case 'cancelled':
-				$pace = WC_PACE_GATEWAY::get_instance();
-				$status = $pace->get_status_when_transaction_cancelled();
-				$error_message = __("Order has been {$status} by customer.", 'woocommerce');
-				$order->update_status( $status, $error_message );
-				throw new Exception( $error_message );
-			case 'expired':
-				$pace = WC_PACE_GATEWAY::get_instance();
-				$status = $pace->get_status_when_transaction_expired();
-				$error_message = __( "The transaction has {$status}. Please try your payment again or contact the admin.", 'woocommerce-pace-gateway' );
-				$order->update_status( $status, $error_message );
-				throw new Exception( $error_message );
-				break;
-			default:
-				# code...
-				break;
+					$order->update_status( 'pending', sprintf( __( "Pace transaction awaiting payment: %s.", 'woocommerce-pace-gateway' ), $transaction_id ) );
+					break;
+				case 'approved':
+					$message = sprintf( __( 'Pace payment is completed (Reference ID: %s)', 'woocommerce-pace-gateway' ), $transaction_id );
+					$order->payment_complete();
+					$order->add_order_note( $message );
+					break;
+				case 'cancelled':
+					$pace = WC_PACE_GATEWAY::get_instance();
+					$status = $pace->get_status_when_transaction_cancelled();
+					$error_message = __("Order has been {$status} by customer.", 'woocommerce');
+					$order->update_status( $status, $error_message );
+					throw new Exception( $error_message );
+				case 'expired':
+					$pace = WC_PACE_GATEWAY::get_instance();
+					$status = $pace->get_status_when_transaction_expired();
+					$error_message = __( "The transaction has {$status}. Please try your payment again or contact the admin.", 'woocommerce-pace-gateway' );
+					$order->update_status( $status, $error_message );
+					throw new Exception( $error_message );
+					break;
+				default:
+					# code...
+					break;
+			}
 		}
+		
 
 		// clear order id
 		unset( WC()->session->order_awaiting_payment );

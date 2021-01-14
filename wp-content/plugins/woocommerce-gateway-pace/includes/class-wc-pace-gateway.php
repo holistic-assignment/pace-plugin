@@ -505,23 +505,21 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 */
 	public function pace_redirect_payment_update_order_status( $order_id ) {
 		try {
-			$order = wc_get_order( $order_id );
+			if ( 'redirect' === $this->checkout_mode  ) {
+				$order = wc_get_order( $order_id );	
 
-			if ( is_wp_error( $order ) ) {
-				throw new Exception( $orer->get_error_messages() );
-			}
+				if ( is_wp_error( $order ) ) {
+					throw new Exception( $orer->get_error_messages() );
+				}
 
-			if ( 'redirect' === $this->checkout_mode 
-				&& 'pending' === $order->get_status() 
-				&& WC_Pace_Cron::check_order_manually_update( $order_id )
-			) {
-				// process order after rediect payment
-				$transaction = array(
-					'status' => 'approved',
-					'transactionId' => '' /* already set transaction ID */
-				);
+				$isFirstHandle = get_post_meta( $order_id, 'first_time_handle', true );
 
-				$this->process_response( $transaction, $order );
+				if ( ! $isFirstHandle ) {
+					$isUpdateStatus = $order->get_status() === 'pending';
+
+					$this->process_response( array( 'status' => 'approved' ), $order, $isUpdateStatus );
+					update_post_meta( $order_id, 'first_time_handle', true );
+				}
 			}
 		} catch (Exception $e) {
 			WC_Pace_Logger::log( $e->getMessage() );
