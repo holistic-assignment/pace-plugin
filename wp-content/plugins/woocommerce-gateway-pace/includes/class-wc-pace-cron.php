@@ -39,17 +39,83 @@ class WC_Pace_Cron
      */
     static function check_order_manually_update($order_id)
     {
+        //cron update when status is pending
         $order = wc_get_order($order_id);
         if ($order->get_status() == "pending") {
             return true;
         }
-        $notes = wc_get_order_notes(['order_id' => $order_id]) ? wc_get_order_notes(['order_id' => $order_id]) : [];
+
+        //  check function wc_get_order_notes exist from woo 
+        if (function_exists('wc_get_order_notes')) {
+            $notes = wc_get_order_notes(['order_id' => $order_id]) ? wc_get_order_notes(['order_id' => $order_id]) : [];
+        } else {
+            $notes = self::get_notes_pace($order_id);
+        }
+
+        // check system update or person update
         foreach ($notes as $note) {
-            if ($note->added_by != 'system') {
+            if ($note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($note->content)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * format note data from comment
+     *
+     * @param  mixed $data
+     * @return void
+     */
+    static function formate_note_data($data)
+    {
+        return (object)  array(
+            'id'            => (int) $data->comment_ID,
+            'date_created'  => wc_string_to_datetime($data->comment_date),
+            'content'       => $data->comment_content,
+            'customer_note' => (bool) get_comment_meta($data->comment_ID, 'is_customer_note', true),
+            'added_by'      => __('WooCommerce', 'woocommerce') === $data->comment_author ? 'system' : $data->comment_author,
+        );
+    }
+
+    /**
+     * get comment by order id
+     *
+     * @param  mixed $order_id
+     * @return void
+     */
+    static function get_notes_pace($order_id)
+    {
+
+        remove_filter('comments_clauses', array('WC_Comments', 'exclude_order_comments'), 10, 1);
+
+        $comments = get_comments([
+            "post_id" => $order_id,
+            "orderby" => "comment_ID",
+            "type" => "order_note"
+        ]);
+
+        add_filter('comments_clauses', array('WC_Comments', 'exclude_order_comments'), 10, 1);
+
+        $notes = [];
+        if (count($comments) > 0) {
+            foreach ($comments as $value) {
+                $notes[] = WC_Pace_Cron::formate_note_data($value);
+            }
+        }
+        return $notes;
+    }
+
+
+    /**
+     * check note change status
+     *
+     * @param  mixed $note
+     * @return void
+     */
+    static function check_note_change_status($note)
+    {
+        return preg_match('/Order status changed from/', $note);
     }
 
     /**
@@ -84,9 +150,11 @@ class WC_Pace_Cron
                 $order = wc_get_order($value->referenceID);
                 if ($order) {
                     if ($order->get_payment_method() == "pace") {
+                        //logic not update order when it has status completed and processing
                         if ($order->get_status() != "completed" && $order->get_status() != "processing") {
-
+                            // handle check manual and pending status
                             if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
+                                //compare 4 case with pace
                                 switch ($value->status) {
                                     case 'cancelled':
                                         if ($order->get_status() != $fail_status) {
