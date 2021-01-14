@@ -511,7 +511,9 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				throw new Exception( $orer->get_error_messages() );
 			}
 
-			if ( 'redirect' === $this->checkout_mode && 'pending' === $order->get_status() ) {
+			if ( 'redirect' === $this->checkout_mode 
+				&& 'pending' === $order->get_status() 
+			) {
 				// process order after rediect payment
 				$transaction = array(
 					'status' => 'approved',
