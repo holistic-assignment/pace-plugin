@@ -170,7 +170,6 @@ function woocommerce_gateway_pace_init()
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
 				// ensure the Pace SDK is loaded before page load
 				add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script'));
-				add_action('woocommerce_before_thankyou', array($this, 'pace_validate_before_success_redirect'));
 				// validate Pace transaction before the client access the cancel page
 				add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
 
@@ -312,51 +311,6 @@ function woocommerce_gateway_pace_init()
 			}
 
 			/**
-			 * Validate Pace transaction before display success page
-			 * 
-			 * @param WC_Order $order_id 
-			 * @since 1.1.4 
-			 */
-			public function pace_validate_before_success_redirect($order_id)
-			{
-				// $order = wc_get_order($order_id);
-
-				// if ( 'pace' != $order->get_payment_method() ) {
-				// 	return;
-				// }
-
-				// try {
-				// 	// ensure the Pace transaction must be 100% completed
-				// 	$getTransaction = WC_Pace_API::request(array(), 'checkouts/' . $order->get_transaction_id(), $method = 'GET');
-					
-				// 	if (isset($getTransaction->error)) {
-				// 		throw new Exception(__('Cannot found the transaction.', 'woocommerce-pace-gateway'));
-				// 	}
-
-				// 	if ('approved' !== $getTransaction->status) {
-				// 		throw new Exception(__( 'The transaction is not approved, the client is redirected to the Cancel page.', 'woocommerce-pace-gateway' ), 201);
-				// 	}
-				// } catch (Exception $e) {
-				// 	WC_Pace_Logger::log( 'Pace validates the transaction before accessing the successfully page: ' . $e->getMessage() );
-				// 	$redirect_cancel_uri = WC_Pace_Helper::pace_http_build_query(
-				// 		$order->get_cancel_order_url_raw(),
-				// 		array(
-				// 			'merchantReferenceId' => $order_id
-				// 		)
-				// 	);
-
-				// 	if ( 201 === $e->getCode() ) {
-				// 		// storage Pace transaction to transient to resume on the Cancel page.
-				// 		// expired time: 1 hour
-				// 		$setTransient = set_transient( esc_attr( 'pace_transaction_before_success_redirect' ), $getTransaction, $expiration = 3600 );
-				// 	}
-					
-				// 	wp_safe_redirect($redirect_cancel_uri);
-				// 	exit();
-				// }
-			}
-
-			/**
 			 * Woocommerce pace Gateway - include widgets
 			 * @param  html   $price    WC_Product::get_price_html
 			 * @param  object $instance WC_Product::instance
@@ -421,7 +375,7 @@ function woocommerce_gateway_pace_init()
 			{
 				try {
 					// clear order session first
-					unset(WC()->session->order_awaiting_payment);
+					WC()->session->set( 'order_awaiting_payment', false );
 
 					// retrieve Pace transaction from transient
 					// if the transient is empty, send an API request

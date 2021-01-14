@@ -513,6 +513,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 			if ( 'redirect' === $this->checkout_mode 
 				&& 'pending' === $order->get_status() 
+				&& WC_Pace_Cron::check_order_manually_update( $order_id )
 			) {
 				// process order after rediect payment
 				$transaction = array(
