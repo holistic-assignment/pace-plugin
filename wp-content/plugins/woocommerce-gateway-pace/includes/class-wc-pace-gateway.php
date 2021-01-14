@@ -507,7 +507,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		try {
 			if ( 'redirect' === $this->checkout_mode  ) {
 				$order = wc_get_order( $order_id );	
-
+				
 				if ( is_wp_error( $order ) ) {
 					throw new Exception( $orer->get_error_messages() );
 				}
@@ -515,10 +515,15 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				$isFirstHandle = get_post_meta( $order_id, 'first_time_handle', true );
 
 				if ( ! $isFirstHandle ) {
+					update_post_meta( $order_id, 'first_time_handle', true );
+
 					$isUpdateStatus = $order->get_status() === 'pending';
 
+					if ( ! $isUpdateStatus ) {
+						$order->add_order_note( __( 'Pace payment is completed (Reference ID: '. $order->get_transaction_id() .')', 'woocommerce-pace-gateway' ) );
+					}
+
 					$this->process_response( array( 'status' => 'approved' ), $order, $isUpdateStatus );
-					update_post_meta( $order_id, 'first_time_handle', true );
 				}
 			}
 		} catch (Exception $e) {

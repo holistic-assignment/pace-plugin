@@ -108,7 +108,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 	 * @param  Array 	$transaction Pacenow API response
 	 * @param  WC_Order $order       Checkout's order
 	 */
-	public function process_response( $transaction, $order, $isIgnore = false ) {
+	public function process_response( $transaction, $order, $isUpdate = false ) {
 		$order_id = $order->get_id();
 		$transaction_id = empty( $transaction['transactionId'] ) ? $order->get_transaction_id() : $transaction['transactionId'];
 
@@ -122,7 +122,7 @@ abstract class Abstract_WC_Pace_Payment_Gateway extends WC_Payment_Gateway_CC {
 		 * 
 		 * @since 1.0.5
 		 */
-		if ( $isIgnore ) {
+		if ( $isUpdate ) {
 			switch ( $transaction['status'] ) {
 				case 'pending_confirmation':
 					$order_stock_reduced = $order->get_meta( '_order_stock_reduced', true );
