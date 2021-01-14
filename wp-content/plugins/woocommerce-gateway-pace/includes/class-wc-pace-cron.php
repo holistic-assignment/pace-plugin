@@ -4,12 +4,22 @@ define('HOOK_NAME',  'hook_compare_transaction');
 class WC_Pace_Cron
 {
 
+    /**
+     * setup cron
+     *
+     * @return void
+     */
     static function setup()
     {
         self::handle_add_cron();
         add_action(HOOK_NAME,  'WC_Pace_Cron::compare_transaction');
     }
 
+    /**
+     * add next cron in database
+     *
+     * @return void
+     */
     static function handle_add_cron()
     {
         $pace_settings = get_option('woocommerce_pace_settings');
@@ -19,9 +29,14 @@ class WC_Pace_Cron
                 wp_schedule_single_event(time() +  $time, HOOK_NAME);
             }
         }
-        error_log(wp_next_scheduled(HOOK_NAME));
     }
 
+    /**
+     * check order update by system
+     *
+     * @param  int $order_id
+     * @return boolean
+     */
     static function check_order_manually_update($order_id)
     {
         $notes = wc_get_order_notes(['order_id' => $order_id]) ? wc_get_order_notes(['order_id' => $order_id]) : [];
@@ -33,9 +48,13 @@ class WC_Pace_Cron
         return true;
     }
 
+    /**
+     * compare woo with pace status
+     *
+     * @return void
+     */
     static function compare_transaction()
     {
-        error_log("enter 4 compare transacr");
         $params = [
             "from" =>  date('Y-m-d', strtotime("-1 weeks")),
             "to"    => date('Y-m-d')
@@ -62,7 +81,7 @@ class WC_Pace_Cron
                 if ($order) {
                     if ($order->get_payment_method() == "pace") {
                         if ($order->get_status() != "completed" && $order->get_status() != "processing") {
-                            
+
                             if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
                                 switch ($value->status) {
                                     case 'cancelled':
