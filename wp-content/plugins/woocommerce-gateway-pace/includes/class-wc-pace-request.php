@@ -94,11 +94,11 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 			 * Update: call API to cancel transaction before update wc order
 			 * @since 1.1.1
 			 */
-			$do_cancel = WC_Pace_Gateway_Payment::cancel_transaction( $order );
+			$doCancel = WC_Pace_Gateway_Payment::cancel_transaction( $order );
 
-			if ( isset( $do_cancel->error ) ) {
-				$error_message = $do_cancel->error->message ? $do_cancel->error->message : 'There was an error canceling the transaction.';
-				$localized_message = __( sprintf( '%s %s', $error_message, $do_cancel->correlation_id ), 'woocommerce-pace-gateway' );
+			if ( isset( $doCancel->error ) ) {
+				$error_message = $doCancel->error->message ? $doCancel->error->message : 'There was an error canceling the transaction.';
+				$localized_message = __( sprintf( '%s %s', $error_message, $doCancel->correlation_id ), 'woocommerce-pace-gateway' );
 				throw new Exception( $localized_message );
 			}
 

@@ -385,27 +385,35 @@ function woocommerce_gateway_pace_init()
 						throw new Exception(__('Pace transaction cannot be retrieved, therefore your order is invalid.' . $getTransaction->correlation_id, 'woocommerce-pace-gateway'));
 					}
 
-					if (
-						$order->has_status($this->settings['transaction_failed']) ||
-						!in_array($getTransaction->status, array('cancelled', 'expired'))
-					) {
-						throw new Exception(__('Your order can no longer be cancelled. Please contact us if you need assistance.', 'woocommerce-pace-gateway'));
+					$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order->get_id() );
+
+					if ( ! $isUpdateStatus ) {
+						$noticeMessage = __( 'Pace transaction has been cancelled.', 'woocommerce-gateway-pace' );
+					} else {
+						if (
+							$order->has_status($this->settings['transaction_failed']) ||
+							!in_array($getTransaction->status, array('cancelled', 'expired'))
+						) {
+							throw new Exception(__('Your order can no longer be cancelled. Please contact us if you need assistance.', 'woocommerce-pace-gateway'));
+						}
+
+						switch ($getTransaction->status) {
+							case 'cancelled':
+								$statuses = $this->get_status_when_transaction_cancelled();
+								break;
+							case 'expired':
+								$statuses = $this->get_status_when_transaction_expired();
+								break;
+							default:
+								$statuses = '';
+								break;
+						}
+
+						$noticeMessage = __("Your order has been {$statuses}.", 'woocommerce-gateway-pace');
+						$order->update_status($statuses, $noticeMessage);
 					}
 
-					switch ($getTransaction->status) {
-						case 'cancelled':
-							$statuses = $this->get_status_when_transaction_cancelled();
-							break;
-						case 'expired':
-							$statuses = $this->get_status_when_transaction_expired();
-							break;
-						default:
-							$statuses = '';
-							break;
-					}
-
-					$order->update_status($statuses, __("Your order has been {$statuses}.", 'woocommerce'));
-					wc_add_notice( apply_filters( 'woocommerce_order_cancelled_notice', __("Your order has been {$statuses}.", 'woocommerce') ), 'notice');
+					wc_add_notice( apply_filters( 'woocommerce_order_cancelled_notice', $noticeMessage ), 'notice');
 				} catch (Exception $e) {
 					wc_add_notice($e->getMessage(), 'error');
 				}
