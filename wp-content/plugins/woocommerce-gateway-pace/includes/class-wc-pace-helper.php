@@ -107,12 +107,11 @@ class WC_Pace_Helper
 				$getCartTotal = Abstract_WC_Pace_Payment_Gateway::unit_cents( WC()->cart->get_total( $context = 'float' ) );
 
 				if ( $getCartTotal < $getPacePlan->minAmount->value OR $getCartTotal > $getPacePlan->maxAmount->value ) {
-					throw new Exception( "The price of the order is out of price range allows", 405 );
+					throw new Exception( "The price of the order is out of price range allows.", 405 );
 				}
 			} 
 
 			return true;
-
 		} catch (Exception $e) {
 			WC_Pace_Logger::log('Check availabel countries and currencies: ' . $e->getMessage());
 			return false;

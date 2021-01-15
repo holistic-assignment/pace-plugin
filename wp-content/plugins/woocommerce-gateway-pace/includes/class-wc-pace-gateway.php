@@ -505,7 +505,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 */
 	public function pace_redirect_payment_update_order_status( $order_id ) {
 		try {
-			if ( 'redirect' === $this->checkout_mode  ) {
+			if ( 'redirect' === $this->checkout_mode ) {
+				
 				$order = wc_get_order( $order_id );	
 				
 				if ( is_wp_error( $order ) ) {
@@ -517,11 +518,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 				if ( ! $isFirstHandle ) {
 					update_post_meta( $order_id, 'first_time_handle', true );
 
-					$isUpdateStatus = $order->get_status() === 'pending';
-
-					if ( ! $isUpdateStatus ) {
-						$order->add_order_note( __( 'Pace payment is completed (Reference ID: '. $order->get_transaction_id() .')', 'woocommerce-pace-gateway' ) );
-					}
+					// check if the order has been previously updated by the merchant
+					$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order_id );
 
 					$this->process_response( array( 'status' => 'approved' ), $order, $isUpdateStatus );
 				}
