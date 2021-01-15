@@ -67,7 +67,7 @@ class WC_Pace_Cron
      * @param  mixed $data
      * @return void
      */
-    static function formate_note_data($data)
+    static function format_note_data($data)
     {
         return (object)  array(
             'id'            => (int) $data->comment_ID,
@@ -100,7 +100,7 @@ class WC_Pace_Cron
         $notes = [];
         if (count($comments) > 0) {
             foreach ($comments as $value) {
-                $notes[] = WC_Pace_Cron::formate_note_data($value);
+                $notes[] = WC_Pace_Cron::format_note_data($value);
             }
         }
         return $notes;
