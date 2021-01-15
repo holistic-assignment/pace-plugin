@@ -60,11 +60,6 @@ function woocommerce_pace_gateway_wc_not_supported()
  */
 add_action('plugins_loaded', 'woocommerce_gateway_pace_init');
 
-
-
-
-// add the filter 
-
 function woocommerce_gateway_pace_init()
 {
 	// load i10n
@@ -163,8 +158,10 @@ function woocommerce_gateway_pace_init()
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-gateway.php';
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-request.php'; /* handle payment request */
 				require_once dirname(__FILE__) . '/includes/class-wc-pace-cron.php';
-				if (!$this->is_block())
+
+				if ( ! $this->is_block() ) {
 					return; /* block the plugin when the currency is not allows */
+				}
 
 				add_action('admin_notices', array( $this, 'pace_show_admin_notices' ) );
 				add_action('admin_enqueue_scripts', array($this, 'loaded_pace_style'));
@@ -265,7 +262,11 @@ function woocommerce_gateway_pace_init()
 			 */
 			public function is_block()
 			{
-				return WC_Pace_Helper::is_block();
+				$getWCCountriesInstance = new WC_Countries();
+				$getBaseCurrency = get_woocommerce_currency();
+				$getBaseCountry = $getWCCountriesInstance->get_base_country();
+
+				return WC_Pace_Helper::is_block( $getBaseCurrency, $getBaseCountry );
 			}
 
 			/**

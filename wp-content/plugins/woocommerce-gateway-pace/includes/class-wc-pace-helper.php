@@ -48,9 +48,8 @@ class WC_Pace_Helper
 	 * @return array availabel list plans
 	 */
 	public static function get_merchant_plan() {
-		$request = 'checkouts/plans';
 		// make a call request to API
-		$response = WC_Pace_API::request( array(), $request, $method = 'GET' );
+		$response = WC_Pace_API::request( array(), 'checkouts/plans', $method = 'GET' );
 
 		if ( ! isset( $response->list ) or empty( $response->list ) ) {
 			throw new Exception( __( "Can't validate the merchant plans. Please contact the administrator.", 'woocommerce-pace-gateway' ) );
@@ -63,48 +62,59 @@ class WC_Pace_Helper
 	/**
 	 * Blocked the plugins
 	 *
-	 * @param string $currency is currency need checked
+	 * @param string $currency the customer currency
+	 * @param string $country  the customer country
 	 * @since 1.1.0
 	 * @version 1.0.0
 	 * @return boolean
 	 */
-	public static function is_block( $currency = '' ) {
+	public static function is_block( $currency = '', $country = '' ) {
 		try {
 			// only applies on fronts page
 			if ( is_admin() ) {
 				return true;
 			}
-
-			$plans = self::get_merchant_plan();
-			// validate currency
-			$currency = empty( $currency ) ? get_woocommerce_currency() : $currency;
 			
-			if ( $currency !== $plans->currencyCode ) {
-				$localized_message = sprintf( '%s (%s).', __( 'Currently, Pace do not support your currency.', 'woocommerce-pace-gateway' ), $currency );
-				
-				throw new Exception( $localized_message );
+			$clientCurrency = empty( $currency ) ? get_woocommerce_currency() : $currency;
+			
+			if ( ! $currency || ! $country ) {
+				throw new Exception("Not found the currency/country.", 404);
 			}
 
-			// update cart fragments
+			/**
+			 * Add more availabel countries and currencies
+			 * @var array
+			 * @since 1.1.8
+			 */
+			$availabelCurrencies = array(
+				'SG' => 'SGD',
+				'MY' => 'MYR',
+				'TH' => 'THB',
+				'HK' => 'HKD',
+			);
+
+			if ( ! in_array( $clientCurrency, $availabelCurrencies ) ) {
+				throw new Exception( "Pace doesn't support the client currency.", 405 );
+			}
+
+			if ( ! in_array( $country, array_keys( $availabelCurrencies ) ) ) {
+				throw new Exception( "Pace doesn't support the client country.", 405 );
+			}
+
 			if ( isset( WC()->cart ) ) {
-
 			 	WC()->cart->calculate_totals();
+			 	$getPacePlan = self::get_merchant_plan();
+				$getCartTotal = Abstract_WC_Pace_Payment_Gateway::unit_cents( WC()->cart->get_total( $context = 'float' ) );
 
-			 	// check the amount range that the plan allows
-				$cart_total_amount = Abstract_WC_Pace_Payment_Gateway::unit_cents( WC()->cart->get_total( $context = 'float' ) );
-
-				if ( $cart_total_amount < $plans->minAmount->value OR $cart_total_amount > $plans->maxAmount->value ) {
-					$range_amount = $plans->currencyCode .' $'. $plans->minAmount->actualValue . ' - ' . $plans->currencyCode .' $'. $plans->maxAmount->actualValue;
-					$localized_message = sprintf( '%s: %s', __( 'The price of the order is out of price range allows', 'woocommerce-pace-gateway' ), wp_kses_post( $range_amount ) );
-
-					throw new Exception( $localized_message );
+				if ( $getCartTotal < $getPacePlan->minAmount->value OR $getCartTotal > $getPacePlan->maxAmount->value ) {
+					throw new Exception( "The price of the order is out of price range allows", 405 );
 				}
 			} 
 
 			return true;
 
 		} catch (Exception $e) {
-			WC_Pace_Logger::log('Error: ' . $e->getMessage());
+			WC_Pace_Logger::log('Check availabel countries and currencies: ' . $e->getMessage());
 			return false;
 		}
 	}
