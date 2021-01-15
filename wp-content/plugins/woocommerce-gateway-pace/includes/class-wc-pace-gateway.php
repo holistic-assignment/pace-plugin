@@ -180,12 +180,12 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			'yes' == $this->enabled && 
 			!empty( $this->client_id ) &&
 			!empty( $this->client_secret ) &&
-			WC_Pace_Helper::is_block( $currency )
+			WC_Pace_Helper::is_block( $currency, $country )
 		) {
 			return true;
 		}
 
-		return;
+		return false;
 	}
 
 	public function initHooks()
