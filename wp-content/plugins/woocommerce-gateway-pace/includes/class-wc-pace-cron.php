@@ -40,6 +40,7 @@ class WC_Pace_Cron
     static function check_order_manually_update($order_id)
     {
         //cron update when status is pending
+        //pending case
         $order = wc_get_order($order_id);
         if ($order->get_status() == "pending") {
             return true;
@@ -52,9 +53,12 @@ class WC_Pace_Cron
             $notes = self::get_notes_pace($order_id);
         }
 
-        // check system update or person update
-        foreach ($notes as $note) {
-            if ($note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($note->content)) {
+        // check system update or person update 
+        // so for cancel or on hold case it will base on system or merchant
+        // get last note because it order by order id desc we get first index
+        if(!!$notes) {
+            $last_note = $notes[0];
+            if ($last_note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($last_note->content)) {
                 return false;
             }
         }
@@ -151,7 +155,6 @@ class WC_Pace_Cron
                 if ($order) {
                     if ($order->get_payment_method() == "pace") {
                         //logic not update order when it has status completed and processing
-                        if ($order->get_status() != "completed" && $order->get_status() != "processing") {
                             // handle check manual and pending status
                             if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
                                 //compare 4 case with pace
@@ -185,7 +188,6 @@ class WC_Pace_Cron
                                         break;
                                 }
                             }
-                        }
                     }
                 }
             }
