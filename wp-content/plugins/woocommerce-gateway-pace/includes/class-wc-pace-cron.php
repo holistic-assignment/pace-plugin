@@ -45,8 +45,9 @@ class WC_Pace_Cron
         if ($order->get_status() == "pending") {
             return true;
         }
+    
 
-        if ($order->get_status() != "cancelled" || $order->get_status() !=  "failed") {
+        if ($order->get_status() != "cancelled" && $order->get_status() !=  "failed") {
             return false;
         }
 
@@ -123,7 +124,7 @@ class WC_Pace_Cron
      */
     static function check_note_change_status($note)
     {
-        return preg_match('/Order status changed from/', $note);
+        return preg_match('/Order status changed from/', $note) || preg_match('/Pace payment is/', $note);
     }
 
     /**
@@ -133,6 +134,7 @@ class WC_Pace_Cron
      */
     static function compare_transaction()
     {
+
         $params = [
             "from" =>  date('Y-m-d', strtotime("-1 weeks")),
             "to"    => date('Y-m-d')
