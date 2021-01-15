@@ -46,6 +46,10 @@ class WC_Pace_Cron
             return true;
         }
 
+        if ($order->get_status() != "cancelled" || $order->get_status() !=  "failed") {
+            return false;
+        }
+
         //  check function wc_get_order_notes exist from woo 
         if (function_exists('wc_get_order_notes')) {
             $notes = wc_get_order_notes(['order_id' => $order_id]) ? wc_get_order_notes(['order_id' => $order_id]) : [];
@@ -56,7 +60,7 @@ class WC_Pace_Cron
         // check system update or person update 
         // so for cancel or on hold case it will base on system or merchant
         // get last note because it order by order id desc we get first index
-        if(!!$notes) {
+        if (!!$notes) {
             $last_note = $notes[0];
             if ($last_note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($last_note->content)) {
                 return false;
@@ -155,39 +159,39 @@ class WC_Pace_Cron
                 if ($order) {
                     if ($order->get_payment_method() == "pace") {
                         //logic not update order when it has status completed and processing
-                            // handle check manual and pending status
-                            if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
-                                //compare 4 case with pace
-                                switch ($value->status) {
-                                    case 'cancelled':
-                                        if ($order->get_status() != $fail_status) {
-                                            WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " $fail_status");
-                                            $order->set_status($fail_status);
-                                            $order->save();
-                                        }
-                                        break;
-                                    case 'pending_confirmation':
-                                        if ($order->get_status() != "pending") {
-                                            WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-pending");
-                                            $order->set_status("wc-pending");
-                                            $order->save();
-                                        }
-                                        break;
-                                    case 'approved':
+                        // handle check manual and pending status
+                        if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
+                            //compare 4 case with pace
+                            switch ($value->status) {
+                                case 'cancelled':
+                                    if ($order->get_status() != $fail_status) {
+                                        WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " $fail_status");
+                                        $order->set_status($fail_status);
+                                        $order->save();
+                                    }
+                                    break;
+                                case 'pending_confirmation':
+                                    if ($order->get_status() != "pending") {
+                                        WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status()   . " wc-pending");
+                                        $order->set_status("wc-pending");
+                                        $order->save();
+                                    }
+                                    break;
+                                case 'approved':
 
-                                        $order->payment_complete();
+                                    $order->payment_complete();
 
-                                        break;
+                                    break;
 
-                                    case 'expired':
-                                        if ($order->get_status() != $expired_status) {
-                                            WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "$expired_status");
-                                            $order->set_status($expired_status);
-                                            $order->save();
-                                        }
-                                        break;
-                                }
+                                case 'expired':
+                                    if ($order->get_status() != $expired_status) {
+                                        WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "$expired_status");
+                                        $order->set_status($expired_status);
+                                        $order->save();
+                                    }
+                                    break;
                             }
+                        }
                     }
                 }
             }
