@@ -523,7 +523,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 
 					if ( ! $isUpdateStatus ) {
 						// do not update order, just add a completed note
-						$order->add_order_note( __( 'Pace payment is completed (Reference ID: '. $order->get_transaction_id() .')', 'woocommerce-pace-gateway' ), 1 , true );
+						$order->add_order_note( __( 'Pace payment is completed (Reference ID: '. $order->get_transaction_id() .')', 'woocommerce-pace-gateway' ) );
 					}
 
 					$this->process_response( array( 'status' => 'approved' ), $order, $isUpdateStatus );

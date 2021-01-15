@@ -61,11 +61,10 @@ class WC_Pace_Cron
         // so for cancel or on hold case it will base on system or merchant
         // get last note because it order by order id desc we get first index
         foreach ($notes as $note) {
-            if ($note->added_by != 'system') {
-                if ($note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($note->content)) {
-                    return false;
-                }
+            if ($note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($note->content)) {
+                return false;
             }
+        
         }
 
         return true;
@@ -125,7 +124,7 @@ class WC_Pace_Cron
      */
     static function check_note_change_status($note)
     {
-        return preg_match('/Order status changed from/', $note) || preg_match('/Pace payment is/', $note);
+        return preg_match('/Order status changed from/', $note);
     }
 
     /**
