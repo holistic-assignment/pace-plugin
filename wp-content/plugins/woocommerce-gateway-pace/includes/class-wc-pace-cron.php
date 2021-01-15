@@ -37,15 +37,14 @@ class WC_Pace_Cron
      * @param  int $order_id
      * @return boolean
      */
-    static function check_order_manually_update($order_id)
-    {
+    static function check_order_manually_update($order_id) {
         //cron update when status is pending
         //pending case
         $order = wc_get_order($order_id);
         if ($order->get_status() == "pending") {
             return true;
         }
-    
+
 
         if ($order->get_status() != "cancelled" && $order->get_status() !=  "failed") {
             return false;
@@ -61,12 +60,14 @@ class WC_Pace_Cron
         // check system update or person update 
         // so for cancel or on hold case it will base on system or merchant
         // get last note because it order by order id desc we get first index
-        if (!!$notes) {
-            $last_note = $notes[0];
-            if ($last_note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($last_note->content)) {
-                return false;
+        foreach ($notes as $note) {
+            if ($note->added_by != 'system') {
+                if ($note->added_by != 'system' && WC_Pace_Cron::check_note_change_status($note->content)) {
+                    return false;
+                }
             }
         }
+
         return true;
     }
 
