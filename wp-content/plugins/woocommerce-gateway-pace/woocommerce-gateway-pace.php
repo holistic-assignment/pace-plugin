@@ -288,10 +288,13 @@ function woocommerce_gateway_pace_init()
 				$pace_sdk = $is_testmode ? 'https://pay-playground.pacenow.co/pace-pay.js' : 'https://pay.pacenow.co/pace-pay.js';
 				$suffix = $is_testmode ? '' : '.min';
 
-				$fallback_params = array();
-				$fallback_params['flag'] = $this->settings['enable_fallback'];
+				$params = array();
+				$currency = get_option('woocommerce_currency'); 
+				$params['flag'] = $this->settings['enable_fallback'];
+				$params['currency'] =  $currency;
+
 				wp_register_script('woocommerce_pace_init', plugins_url('assets/js/pace' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
-				wp_localize_script('woocommerce_pace_init', 'fallback_params', $fallback_params);
+				wp_localize_script('woocommerce_pace_init', 'params', $params);
 				wp_register_script('woocommerce_pace_widget', plugins_url('assets/js/pace-widget' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
 				wp_enqueue_script('woocommerce_pace_init');
 				wp_enqueue_script('woocommerce_pace_widget');

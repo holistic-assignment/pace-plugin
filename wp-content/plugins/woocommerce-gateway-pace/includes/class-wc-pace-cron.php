@@ -46,8 +46,7 @@ class WC_Pace_Cron
             return true;
         }
 
-
-        if ($order->get_status() != "cancelled" && $order->get_status() !=  "failed") {
+        if ($order->get_status() != "cancelled" && $order->get_status() != "failed") {
             return false;
         }
 
@@ -62,7 +61,7 @@ class WC_Pace_Cron
         // so for cancel or on hold case it will base on system or merchant
         // get last note because it order by order id desc we get first index
         foreach ($notes as $note) {
-            if (WC_Pace_Cron::check_note_change_status($note->content)) {
+            if ( WC_Pace_Cron::check_note_change_status($note->content) ) {
                 return $note->added_by == 'system';
             }
         }
