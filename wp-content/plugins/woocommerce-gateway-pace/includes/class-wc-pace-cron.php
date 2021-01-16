@@ -65,6 +65,7 @@ class WC_Pace_Cron
                 return $note->added_by == 'system';
             }
         }
+        return true;
     }
 
     /**
