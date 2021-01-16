@@ -180,12 +180,12 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			'yes' == $this->enabled && 
 			!empty( $this->client_id ) &&
 			!empty( $this->client_secret ) &&
-			WC_Pace_Helper::is_block( $currency )
+			WC_Pace_Helper::is_block( $currency, $country )
 		) {
 			return true;
 		}
 
-		return;
+		return false;
 	}
 
 	public function initHooks()
@@ -505,20 +505,29 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 	 */
 	public function pace_redirect_payment_update_order_status( $order_id ) {
 		try {
-			$order = wc_get_order( $order_id );
+			if ( 'redirect' === $this->checkout_mode ) {
+				
+				$order = wc_get_order( $order_id );	
+				
+				if ( is_wp_error( $order ) ) {
+					throw new Exception( $orer->get_error_messages() );
+				}
 
-			if ( is_wp_error( $order ) ) {
-				throw new Exception( $orer->get_error_messages() );
-			}
+				$isFirstHandle = get_post_meta( $order_id, 'first_time_handle', true );
 
-			if ( 'redirect' === $this->checkout_mode && 'pending' === $order->get_status() ) {
-				// process order after rediect payment
-				$transaction = array(
-					'status' => 'approved',
-					'transactionId' => '' /* already set transaction ID */
-				);
+				if ( ! $isFirstHandle ) {
+					update_post_meta( $order_id, 'first_time_handle', true );
 
-				$this->process_response( $transaction, $order );
+					// check if the order has been previously updated by the merchant
+					$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order_id );
+
+					if ( ! $isUpdateStatus ) {
+						// do not update order, just add a completed note
+						$order->add_order_note( __( 'Pace payment is completed (Reference ID: '. $order->get_transaction_id() .')', 'woocommerce-pace-gateway' ) );
+					}
+
+					$this->process_response( array( 'status' => 'approved' ), $order, $isUpdateStatus );
+				}
 			}
 		} catch (Exception $e) {
 			WC_Pace_Logger::log( $e->getMessage() );
