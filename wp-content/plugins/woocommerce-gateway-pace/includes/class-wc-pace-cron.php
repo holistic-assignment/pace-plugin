@@ -37,8 +37,7 @@ class WC_Pace_Cron
      * @param  int $order_id
      * @return boolean
      */
-    static function check_order_manually_update($order_id)
-    {
+    static function check_order_manually_update($order_id) {
         //cron update when status is pending
         //pending case
         $order = wc_get_order($order_id);
@@ -65,6 +64,7 @@ class WC_Pace_Cron
                 return $note->added_by == 'system';
             }
         }
+
         return true;
     }
 
@@ -178,11 +178,8 @@ class WC_Pace_Cron
                                     }
                                     break;
                                 case 'approved':
-
                                     $order->payment_complete();
-
                                     break;
-
                                 case 'expired':
                                     if ($order->get_status() != $expired_status) {
                                         WC_Pace_Logger::log("Convert " . $order->get_id() . " from " . $order->get_status() . "$expired_status");

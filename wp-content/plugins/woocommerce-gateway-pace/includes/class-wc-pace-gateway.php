@@ -443,7 +443,10 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$transaction = $order->get_transaction_id() 
 				? $this->retrieve_order_transaction( $order )
 				: $this->make_request_create_transaction( $order );
-
+			echo '<pre>';
+			print_r( $transaction );
+			echo '</pre>';
+			die();
 			if ( isset( $transaction->error ) ) {
 				$localized_message = __( 
 					sprintf( 'Your transaction could not be created on Pace. Please contact our team at support@pacenow.co. %s', $transaction->correlation_id ), 
