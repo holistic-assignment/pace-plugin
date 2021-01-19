@@ -292,7 +292,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					$suffix = $is_testmode ? '' : '.min';
 
 					$params = array();
-					$currency = get_option('woocommerce_currency'); 
+					$currency = get_woocommerce_currency(); 
 					$params['flag'] = $this->settings['enable_fallback'];
 					$params['currency'] =  $currency;
 
