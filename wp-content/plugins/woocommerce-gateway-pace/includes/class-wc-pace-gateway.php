@@ -73,17 +73,16 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		$this->init_settings();
 
 		// Get setting values.
-		$this->title         = $this->get_option('title');
-		$this->enabled       = $this->get_option('enabled');
-		$this->testmode	     = 'yes' === $this->get_option('sandBox');
-		$this->description   = $this->get_description();
-		$this->checkout_mode = $this->get_option('checkout_mode');
+		$this->title               = $this->get_option('title');
+		$this->enabled             = $this->get_option('enabled');
+		$this->testmode            = 'yes' === $this->get_option('sandBox');
+		$this->description         = $this->get_description();
+		$this->checkout_mode       = $this->get_option('checkout_mode');
 		$this->order_status_failed = $this->get_option('transaction_failed'); /* update Order status when transaction is cancelled follow merchant setting */
 		$this->order_status_expire = $this->get_option('transaction_expired');
-
-		$this->client_id   	 = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
-		$this->client_secret = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
-		$this->options       = get_option('woocommerce_pace_settings');
+		$this->client_id           = $this->testmode ? $this->get_option('sandbox_client_id') : $this->get_option('client_id');
+		$this->client_secret       = $this->testmode ? $this->get_option('sandbox_client_secret') : $this->get_option('client_secret');
+		$this->options             = get_option('woocommerce_pace_settings');
 		// hooks
 		$this->initHooks();
 	}

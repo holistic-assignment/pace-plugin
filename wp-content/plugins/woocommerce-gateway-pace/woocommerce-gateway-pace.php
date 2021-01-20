@@ -6,7 +6,7 @@
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
  * Version: 1.1.10
- * Requires at least: 5.3
+ * Wp requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
  * Text Domain: woocommerce-gateway-pace
@@ -174,7 +174,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
 
 					add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
-					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 10, 2); /* include pace's widgets */
+					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 99, 2); /* include pace's widgets */
 					add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
 					add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
 				
@@ -292,9 +292,12 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					$suffix = $is_testmode ? '' : '.min';
 
 					$params = array();
-					$currency = get_woocommerce_currency(); 
+					$currency = get_woocommerce_currency();
+					$getPacePlan = WC_Pace_Helper::get_merchant_plan();
 					$params['flag'] = $this->settings['enable_fallback'];
-					$params['currency'] =  $currency;
+					$params['minPrice'] = (float) $getPacePlan->minAmount->value; 
+					$params['maxPrice'] = (float) $getPacePlan->maxAmount->value;
+					$params['currency'] = $currency;
 
 					wp_register_script('woocommerce_pace_init', plugins_url('assets/js/pace' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
 					wp_localize_script('woocommerce_pace_init', 'params', $params);
@@ -325,8 +328,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 				 */
 				public function filter_woocommerce_get_price_html($price, $instance)
 				{
-					$options 	= get_option('woocommerce_pace_settings');
-					$_product 	= get_queried_object();
+					$product 	= get_queried_object();
 					$product_id = $instance->get_id();
 
 					// get product price
@@ -343,42 +345,42 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 
 					// show product price widget by types
 					if (
-						(isset($_product->post_type) and $_product->post_type == 'product')
-						&& $product_id == $_product->ID
+						( isset( $product->post_type ) && $product->post_type == 'product' )
+						&& $product_id == $product->ID
 					) {
-						if ('yes' === $options['enable_single_widget']) {
+						if ('yes' === $this->settings['enable_single_widget']) {
 							$price = $price .
-								apply_filters(
-									'woocommerce_pace_customize_single_widget',
-									sprintf(
-										'<div style="%s" data-theme-color="%s" data-single-primary-color="%s" data-single-second-color="%s" data-fontsize="%s" data-price="%s" id="single-widget"> </div>',
-										$options['single_widget_style'],
-										$options['single_theme_config_color'],
-										$options['single_text_primary_color'],
-										$options['single_text_second_color'],
-										$options['single_fontsize'],
-										esc_attr(	$product_price )
-									),
-									$options,
-									$instance
-								);
+							apply_filters(
+								'woocommerce_pace_customize_single_widget',
+								sprintf(
+									'<div style="%s" data-theme-color="%s" data-single-primary-color="%s" data-single-second-color="%s" data-fontsize="%s" data-price="%s" id="single-widget"> </div>',
+									$this->settings['single_widget_style'],
+									$this->settings['single_theme_config_color'],
+									$this->settings['single_text_primary_color'],
+									$this->settings['single_text_second_color'],
+									$this->settings['single_fontsize'],
+									esc_attr( $product_price )
+								),
+								$this->settings,
+								$instance
+							);
 						}
 					} else {
-						if ('yes' === $options['enable_multiple_widget']) {
+						if ('yes' === $this->settings['enable_multiple_widget']) {
 							$price = $price .
-								apply_filters(
-									'woocommerce_pace_customize_multiple_widget',
-									sprintf(
-										'</span> <div style="%s" data-theme-color="%s" data-text-color="%s" data-fontsize="%s" data-price="%s" id="multiple-widget"> </div> <span>',
-										$options['multiple_widget_style'],
-										$options['multiple_theme_config_color'],
-										$options['multiple_text_color'],
-										$options['multiple_fontsize'],
-										esc_attr(	$product_price )
-									),
-									$options,
-									$instance
-								);
+							apply_filters(
+								'woocommerce_pace_customize_multiple_widget',
+								sprintf(
+									'</span> <div style="%s" data-theme-color="%s" data-text-color="%s" data-fontsize="%s" data-price="%s" id="multiple-widget"> </div> <span>',
+									$this->settings['multiple_widget_style'],
+									$this->settings['multiple_theme_config_color'],
+									$this->settings['multiple_text_color'],
+									$this->settings['multiple_fontsize'],
+									esc_attr( $product_price )
+								),
+								$this->settings,
+								$instance
+							);
 						}
 					}
 

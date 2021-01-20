@@ -49,14 +49,14 @@ class WC_Pace_Helper
 	 */
 	public static function get_merchant_plan() {
 		// make a call request to API
-		$response = WC_Pace_API::request( array(), 'checkouts/plans', $method = 'GET' );
+		$getPacePlan = WC_Pace_API::request( array(), 'checkouts/plans', $method = 'GET' );
 
-		if ( ! isset( $response->list ) or empty( $response->list ) ) {
-			throw new Exception( __( "Can't validate the merchant plans. Please contact the administrator.", 'woocommerce-pace-gateway' ) );
+		if ( isset( $getPacePlan->error ) ) {
+			throw new Exception( $getPacePlan->error->message . '. code: ' . $getPacePlan->correlation_id );
 		}
 
 		// currently, we just only validate the first plan of the list
-		return apply_filters( 'woocommerce_pace_validate_merchant_plans', array_shift( $response->list ), $response );
+		return apply_filters( 'woocommerce_pace_validate_merchant_plans', array_shift( $getPacePlan->list ) );
 	}
 
 	/**
@@ -76,7 +76,7 @@ class WC_Pace_Helper
 			}
 			
 			$clientCurrency = empty( $currency ) ? get_woocommerce_currency() : $currency;
-			
+
 			if ( ! $currency || ! $country ) {
 				throw new Exception("Not found the currency/country.", 404);
 			}
@@ -86,30 +86,25 @@ class WC_Pace_Helper
 			 * @var array
 			 * @since 1.1.8
 			 */
-			$availabelCurrencies = array(
-				'SG' => 'SGD',
-				'MY' => 'MYR',
-				'TH' => 'THB',
-				'HK' => 'HKD',
-			);
+			$getPacePlan = self::get_merchant_plan();
 
-			if ( ! in_array( $clientCurrency, $availabelCurrencies ) ) {
+			if ( $getPacePlan->currencyCode !== $clientCurrency ) {
 				throw new Exception( "Pace doesn't support the client currency.", 405 );
 			}
 
-			if ( ! in_array( $country, array_keys( $availabelCurrencies ) ) ) {
+			if ( $getPacePlan->country !== $country ) {
 				throw new Exception( "Pace doesn't support the client country.", 405 );
 			}
 
 			if ( isset( WC()->cart ) ) {
-			 	WC()->cart->calculate_totals();
-			 	$getPacePlan = self::get_merchant_plan();
+				WC()->cart->calculate_totals();
+
 				$getCartTotal = Abstract_WC_Pace_Payment_Gateway::unit_cents( WC()->cart->get_total( $context = 'float' ) );
 
-				if ( $getCartTotal < $getPacePlan->minAmount->value OR $getCartTotal > $getPacePlan->maxAmount->value ) {
+				if ( $getCartTotal < $getPacePlan->minAmount->value || $getCartTotal > $getPacePlan->maxAmount->value ) {
 					throw new Exception( "The price of the order is out of price range allows.", 405 );
 				}
-			} 
+			}
 
 			return true;
 		} catch (Exception $e) {

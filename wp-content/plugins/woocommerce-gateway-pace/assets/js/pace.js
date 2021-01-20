@@ -5,7 +5,9 @@
 		  	var pacePay = init({
 				fallbackWidget: params.flag === 'yes' ? true : false, // show fallback widget if price is not within min and max
 				debug: true,
-				currency: !!params.currency ? params.currency : "SGD" ,
+				currency: !!params.currency ? params.currency : "SGD",
+				minAmount: params.minPrice,
+				maxAmount: params.maxPrice,
 		    	onEvent: function(event) {
 		      		var type = event.type,
   						payload = event.payload;
