@@ -329,6 +329,18 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					$_product 	= get_queried_object();
 					$product_id = $instance->get_id();
 
+					// get product price
+					if(!function_exists('wc_format_sale_price')){
+						return $price;
+					}
+					
+					if($instance->is_on_sale()){
+						$product_price = !!$instance->get_sale_price() ? $instance->get_sale_price() :  $instance->get_regular_price();
+					} else {
+						$product_price = $instance->get_price();
+					}
+
+
 					// show product price widget by types
 					if (
 						(isset($_product->post_type) and $_product->post_type == 'product')
@@ -345,7 +357,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 										$options['single_text_primary_color'],
 										$options['single_text_second_color'],
 										$options['single_fontsize'],
-										esc_attr($instance->get_price())
+										esc_attr(	$product_price )
 									),
 									$options,
 									$instance
@@ -362,7 +374,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 										$options['multiple_theme_config_color'],
 										$options['multiple_text_color'],
 										$options['multiple_fontsize'],
-										esc_attr($instance->get_price())
+										esc_attr(	$product_price )
 									),
 									$options,
 									$instance
