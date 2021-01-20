@@ -5,7 +5,7 @@
  * Description: Provides Pace as a payment method in WooCommerce.
  * Author: Pace Enterprise Pte Ltd
  * Author URI: https://developers.pacenow.co/#plugins-woocommerce
- * Version: 1.1.10
+ * Version: 1.1.11-rc01
  * Requires at least: 5.3
  * WC requires at least: 3.0
  * Requires PHP: 7.*
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('WC_PACE_GATEWAY_VERSION', '1.1.10');
+define('WC_PACE_GATEWAY_VERSION', '1.1.11-rc01');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
@@ -330,7 +330,13 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					$product_id = $instance->get_id();
 
 					// get product price
-					if(!function_exists('wc_format_sale_price')){
+				
+					if(
+						!function_exists('wc_format_sale_price')   || 
+						!method_exists('WC_Product', 'is_on_sale') || 
+						!method_exists('WC_Product', 'get_price')  ||
+						!method_exists('WC_Product', 'get_sale_price') ||
+						!method_exists('WC_Product', 'get_regular_price')) {
 						return $price;
 					}
 					
