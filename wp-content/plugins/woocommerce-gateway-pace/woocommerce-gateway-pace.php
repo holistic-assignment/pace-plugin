@@ -295,8 +295,8 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					$currency = get_woocommerce_currency();
 					$getPacePlan = WC_Pace_Helper::get_merchant_plan();
 					$params['flag'] = $this->settings['enable_fallback'];
-					$params['minPrice'] = (float) $getPacePlan->minAmount->value; 
-					$params['maxPrice'] = (float) $getPacePlan->maxAmount->value;
+					$params['minPrice'] = (float) $getPacePlan->minAmount->actualValue; 
+					$params['maxPrice'] = (float) $getPacePlan->maxAmount->actualValue;
 					$params['currency'] = $currency;
 
 					wp_register_script('woocommerce_pace_init', plugins_url('assets/js/pace' . $suffix . '.js', WC_PACE_MAIN_FILE), null, null, true);
