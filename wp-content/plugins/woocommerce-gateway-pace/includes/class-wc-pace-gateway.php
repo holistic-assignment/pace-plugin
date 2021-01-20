@@ -172,14 +172,11 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		 * checkout - update order rivew
 		 * since 1.1.0
 		 */ 
-		$country = isset( WC()->customer ) ? WC()->customer->get_billing_country() : '';
-		$currency = WC_Pace_Helper::get_currency_by_country( $country );
 		
 		if ( 
 			'yes' == $this->enabled && 
 			!empty( $this->client_id ) &&
-			!empty( $this->client_secret ) &&
-			WC_Pace_Helper::is_block( $currency, $country )
+			!empty( $this->client_secret )
 		) {
 			return true;
 		}
