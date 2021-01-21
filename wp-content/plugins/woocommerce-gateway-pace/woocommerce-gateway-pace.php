@@ -343,7 +343,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					}
 					
 					if($instance->is_on_sale()){
-						$product_price = !!$instance->get_sale_price() ? $instance->get_sale_price() :  $instance->get_regular_price();
+						$product_price = $instance->get_sale_price() != "" ? $instance->get_sale_price() :  $instance->get_regular_price();
 					} else {
 						$product_price = $instance->get_price();
 					}
@@ -357,7 +357,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 						if ('yes' === $this->settings['enable_single_widget']) {
 							$price = $price .
 							apply_filters(
-								'woocommerce_pace_customize_single_widget',
+								'woocommerce_pace_customize_single_widget',
 								sprintf(
 									'<div style="%s" data-theme-color="%s" data-single-primary-color="%s" data-single-second-color="%s" data-fontsize="%s" data-price="%s" id="single-widget"> </div>',
 									$this->settings['single_widget_style'],
