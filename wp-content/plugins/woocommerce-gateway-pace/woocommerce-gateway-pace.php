@@ -67,7 +67,7 @@ function filter_woocommerce_available_payment_gateways($available_payment )
 	$total = $woocommerce->cart->total;
 	// unset($available_payment['pace']);
 	$max_amount = $result->maxAmount->actualValue;
-	if ((int) $total > (int) $max_amount){
+	if ((double) $total > (double) $max_amount){
 		unset($available_payment['pace']);
 	}
 	return  $available_payment;
