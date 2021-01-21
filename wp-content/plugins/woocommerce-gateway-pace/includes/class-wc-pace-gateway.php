@@ -171,13 +171,8 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 		/**
 		 * checkout - update order rivew
 		 * since 1.1.0
-		 */ 
-		
-		if ( 
-			'yes' == $this->enabled && 
-			!empty( $this->client_id ) &&
-			!empty( $this->client_secret )
-		) {
+		 */
+		if ( 'yes' == $this->enabled && !empty( $this->client_id ) && !empty( $this->client_secret ) ) {
 			return true;
 		}
 
