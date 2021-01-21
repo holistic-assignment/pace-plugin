@@ -55,6 +55,25 @@ if ( ! function_exists( 'woocommerce_pace_gateway_wc_not_supported' ) ) {
 	}
 }
 
+function filter_woocommerce_available_payment_gateways($available_payment )
+{
+	global $woocommerce;
+	
+	$result =WC_Pace_Helper::get_merchant_plan();
+	if ( !isset($result->maxAmount->actualValue) ) {
+		throw new Exception( "Can not get maxAmount from pace", 405 );
+	}
+
+	$total = $woocommerce->cart->total;
+	// unset($available_payment['pace']);
+	$max_amount = $result->maxAmount->actualValue;
+	if ((int) $total > (int) $max_amount){
+		unset($available_payment['pace']);
+	}
+	return  $available_payment;
+	
+}
+
 /**
  * Active plugins
  *
@@ -172,6 +191,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script'));
 					// validate Pace transaction before the client access the cancel page
 					add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
+					add_filter( 'woocommerce_available_payment_gateways', 'filter_woocommerce_available_payment_gateways', 99, 1 );
 
 					add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
 					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 99, 2); /* include pace's widgets */
