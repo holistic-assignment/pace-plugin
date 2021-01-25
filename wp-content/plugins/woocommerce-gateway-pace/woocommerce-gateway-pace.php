@@ -348,6 +348,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 				 */
 				public function filter_woocommerce_get_price_html($price, $instance)
 				{
+				
 					$product 	= get_queried_object();
 					$product_id = $instance->get_id();
 
@@ -362,10 +363,33 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 						return $price;
 					}
 					
-					if($instance->is_on_sale()){
-						$product_price = $instance->get_sale_price() != "" ? $instance->get_sale_price() :  $instance->get_regular_price();
-					} else {
-						$product_price = $instance->get_price();
+					$low_price = null;
+					$dom = new DOMDocument; 
+					$dom->loadHTML(str_replace ('”', '"', $price));  
+					$xpath = new DOMXPath($dom);
+					$domList = $xpath->query('//span[contains(@class, "woocommerce-Price-amount amount")]');
+                 
+					foreach($domList as $value){
+					   
+						preg_match('/[\d|\.|\,]+/', $value->nodeValue, $matches);
+						if(!isset($matches[0])) {
+							continue;
+						}	
+					 
+					   $format_price = str_replace(wc_get_price_thousand_separator(), '', $matches[0] );
+					   $format_price = str_replace( wc_get_price_decimal_separator(), '.', $format_price);
+					  
+					  if(is_numeric($format_price)){
+					      if(!$low_price) {
+					          $low_price = $format_price;
+					          continue;
+					      }
+					      
+					      if($low_price > $format_price ){
+					          $low_price = $format_price;
+					      }
+					  }
+					 
 					}
 
 
@@ -385,7 +409,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 									$this->settings['single_text_primary_color'],
 									$this->settings['single_text_second_color'],
 									$this->settings['single_fontsize'],
-									esc_attr( $product_price )
+									esc_attr( $low_price )
 								),
 								$this->settings,
 								$instance
@@ -402,7 +426,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 									$this->settings['multiple_theme_config_color'],
 									$this->settings['multiple_text_color'],
 									$this->settings['multiple_fontsize'],
-									esc_attr( $product_price )
+									esc_attr( $low_price )
 								),
 								$this->settings,
 								$instance
