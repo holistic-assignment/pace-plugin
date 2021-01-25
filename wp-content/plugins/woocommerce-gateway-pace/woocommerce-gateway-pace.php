@@ -370,6 +370,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					
 					$low_price = null;
 					$dom = new DOMDocument; 
+					libxml_use_internal_errors(true);
 					$dom->loadHTML(str_replace ('”', '"', $price));  
 					$xpath = new DOMXPath($dom);
 					$domList = $xpath->query('//span[contains(@class, "woocommerce-Price-amount amount")]');
