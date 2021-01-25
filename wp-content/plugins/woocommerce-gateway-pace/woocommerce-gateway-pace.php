@@ -192,15 +192,15 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					add_action('wp_enqueue_scripts', array($this, 'loaded_pace_script'));
 					// validate Pace transaction before the client access the cancel page
 					add_action('wp_loaded', array($this, 'pace_canceled_redirect_uri'), 99);
-					add_filter( 'woocommerce_available_payment_gateways', 'filter_woocommerce_available_payment_gateways', 99, 1 );
+					add_filter('woocommerce_available_payment_gateways', 'filter_woocommerce_available_payment_gateways', 99, 1);
 
 					add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
-
 					// Pace add price widgets
 					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), PHP_INT_MAX * WC_PACE_PRIORITY, 2);
 					add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
 					add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
-				
+					add_filter('woocommerce_create_order', array($this, 'pace_paying_ignore_create_new_order'), PHP_INT_MAX, 2);
+					
 					WC_Pace_Cron::setup();
 				}
 
@@ -445,6 +445,32 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					}
 
 					return $price;
+				}
+
+				/**
+				 * Ignore create new order when paying with Pace
+				 * @param  null $null     
+				 * @param  WC_Checkout $instance 
+				 * @return int         			 order id
+				 */
+				public function pace_paying_ignore_create_new_order( $null, $instance ) {
+					if ( ! isset( WC()->session ) ) {
+						return $null;
+					}
+
+					$order_id = WC()->session->get( 'order_awaiting_payment' );
+
+					if ( ! $order_id ) {
+						return $null;
+					}
+
+					$order = wc_get_order( $order_id );
+
+					if ( ! $order || $order->get_payment_method() !== 'pace' ) {
+						return $null;
+					}
+
+					return $order_id;
 				}
 
 				/**

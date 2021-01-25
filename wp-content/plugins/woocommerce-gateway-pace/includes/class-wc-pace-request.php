@@ -26,9 +26,9 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 	 */
 	public function woocommerce_pace_create_transaction() {
 		try {
-			$_nonce = wp_unslash( wc_get_var( $_POST['security'] ) ); // phpcs:ignore 
+			$getNonce = wp_unslash( wc_get_var( $_POST['security'] ) ); // phpcs:ignore 
 			// check nonce
-			if ( ! wp_verify_nonce( $_nonce, '_wc_pace_nonce' ) ) {
+			if ( ! wp_verify_nonce( $getNonce, '_wc_pace_nonce' ) ) {
 				wc_add_notice( __( 'We were unable to process your order, please try again.', 'woocommerce-pace-gateway' ), 'error' );
 				
 				throw new Exception( wc_print_notices( true ) );
@@ -37,7 +37,7 @@ class WC_Pace_Request_Payment extends WC_Checkout {
 			do_action( 'woocommerce_pace_before_create_transaction' );
 
 			// validate the posted data and create order
-			// after created order, make the request call to Pace's API to create transaction
+			// before created order, make the request call to Pace's API to create transaction
 			$errors = new WP_Error();
 			$posted_data = $this->get_posted_data();
 			

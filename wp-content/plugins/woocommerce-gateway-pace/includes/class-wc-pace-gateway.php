@@ -359,7 +359,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			// convert transaction to array
 			$transaction = json_decode($transaction, true);
 
-			$this->process_response($transaction, $order);
+			$this->process_response($transaction, $order, true);
 
 			// unlock the process
 			$lock->unlock();
@@ -415,15 +415,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$order = wc_get_order( $order_id );
 
 			if ( is_wp_error( $order ) ) {
-				$localized_message = apply_filters( 
-					'woocommerce_api_cannot_create_order',
-					sprintf( 
-						__( 'Cannot create order: %s', 'woocommerce-pace-gateway' ),
-						implode( ', ', $order->get_error_messages() )
-					)
-				);
-				
-				throw new Exception( $localized_message );
+				throw new Exception( __( $order->get_error_messages(), 'woocommerce-pace-gateway' ) );
 			}
 
 			// store the pre-order id for later use
@@ -464,7 +456,6 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 			$order->set_transaction_id( $transaction->transactionID );
 			$order->add_meta_data( 'pace_transaction', json_encode( $transaction ), $unique = true );
 			$order->save();
-			
 			wp_send_json_success( $transaction );
 		} catch ( Exception $e ) {
 			WC_Pace_Logger::log( $e->getMessage() );

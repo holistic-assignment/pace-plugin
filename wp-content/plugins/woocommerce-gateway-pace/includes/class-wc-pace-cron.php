@@ -11,7 +11,7 @@ class WC_Pace_Cron
      */
     static function setup()
     {
-        self::handle_add_cron();
+        // self::handle_add_cron();
         add_action(HOOK_NAME,  'WC_Pace_Cron::compare_transaction');
     }
 
