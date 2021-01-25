@@ -37,13 +37,21 @@ class WC_Pace_Cron
      * @param  int $order_id
      * @return boolean
      */
-    static function check_order_manually_update($order_id) {
+    static function check_order_manually_update($order_id, $status = null) {
         //cron update when status is pending
         //pending case
         $order = wc_get_order($order_id);
+        
+        if ($status == "pending_confirmation" && ($order->get_status() ==  'cancelled' || $order->get_status() == 'failed') ) {
+            WC_Pace_Gateway_Payment::cancel_transaction($order);
+            return false;
+        }
+        
         if ($order->get_status() == "pending") {
             return true;
         }
+
+        
 
         if ($order->get_status() != "cancelled" && $order->get_status() != "failed") {
             return false;
@@ -160,7 +168,7 @@ class WC_Pace_Cron
                     if ($order->get_payment_method() == "pace") {
                         //logic not update order when it has status completed and processing
                         // handle check manual and pending status
-                        if (WC_Pace_Cron::check_order_manually_update($value->referenceID)) {
+                        if (WC_Pace_Cron::check_order_manually_update($value->referenceID, $value->status)) {
                             //compare 4 case with pace
                             switch ($value->status) {
                                 case 'cancelled':

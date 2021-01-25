@@ -510,7 +510,7 @@ class WC_Pace_Gateway_Payment extends Abstract_WC_Pace_Payment_Gateway
 					update_post_meta( $order_id, 'first_time_handle', true );
 
 					// check if the order has been previously updated by the merchant
-					$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order_id );
+					$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order_id, null );
 
 					if ( ! $isUpdateStatus ) {
 						// do not update order, just add a completed note

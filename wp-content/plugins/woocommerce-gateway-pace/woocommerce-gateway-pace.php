@@ -465,7 +465,7 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 							throw new Exception(__('Pace transaction cannot be retrieved, therefore your order is invalid.' . $getTransaction->correlation_id, 'woocommerce-pace-gateway'));
 						}
 
-						$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order->get_id() );
+						$isUpdateStatus = WC_Pace_Cron::check_order_manually_update( $order->get_id() , null);
 
 						if ( ! $isUpdateStatus ) {
 							$noticeMessage = __( 'Pace transaction has been cancelled.', 'woocommerce-gateway-pace' );
