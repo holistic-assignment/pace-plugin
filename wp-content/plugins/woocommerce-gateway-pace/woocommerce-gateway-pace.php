@@ -359,6 +359,8 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 				
 					if(
 						!function_exists('wc_format_sale_price')   || 
+						!function_exists('wc_get_price_thousand_separator')   || 
+						!function_exists('wc_get_price_decimal_separator')   || 
 						!method_exists('WC_Product', 'is_on_sale') || 
 						!method_exists('WC_Product', 'get_price')  ||
 						!method_exists('WC_Product', 'get_sale_price') ||
@@ -393,6 +395,10 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					      }
 					  }
 					 
+					}
+
+					if(!$low_price) {
+						$low_price = $instance->get_price();
 					}
 
 
