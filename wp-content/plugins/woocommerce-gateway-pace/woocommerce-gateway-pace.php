@@ -24,6 +24,7 @@ define('WC_PACE_GATEWAY_VERSION', '1.1.11');
 define('WC_PACE_GATEWAY_NAME', 'Pace For WooCommerce');
 define('WC_PACE_GATEWAY_MIN_WC_VER', '3.0');
 define('WC_PACE_MAIN_FILE', __FILE__);
+define('WC_PACE_PRIORITY', 9999);
 define('WC_PACE_GATEWAY_PLUGIN_URL', untrailingslashit(plugins_url(basename(plugin_dir_path(__FILE__)), basename(__FILE__))));
 define('WC_PACE_GATEWAY_PLUGIN_PATH', untrailingslashit(plugin_dir_path(__FILE__)));
 
@@ -194,7 +195,9 @@ if ( ! function_exists( 'woocommerce_gateway_pace_init' ) ) {
 					add_filter( 'woocommerce_available_payment_gateways', 'filter_woocommerce_available_payment_gateways', 99, 1 );
 
 					add_filter('woocommerce_payment_gateways', array($this, 'add_gateways'));
-					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), 99, 2); /* include pace's widgets */
+
+					// Pace add price widgets
+					add_filter('woocommerce_get_price_html', array($this, 'filter_woocommerce_get_price_html'), PHP_INT_MAX * WC_PACE_PRIORITY, 2);
 					add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
 					add_filter('woocommerce_update_cart_action_cart_updated', array($this, 'pace_unset_order_session_when_updated_cart'), 20);
 				
