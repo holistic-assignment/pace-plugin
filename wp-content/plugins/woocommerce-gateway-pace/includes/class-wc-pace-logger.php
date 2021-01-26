@@ -10,7 +10,7 @@ class WC_Pace_Logger {
 	
 	protected static $logger;
 	const WC_LOG_FILENAME = 'woocommerce-gateway-pace';
-	const VERSION = '1.1.11';
+	const VERSION = '1.1.12';
 
 	public static function log( $message ) {
 		if ( ! class_exists( 'WC_Logger' ) ) {
